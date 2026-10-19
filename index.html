@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oruro Mecatrónico | Club Universitario & Comunidad de Robótica</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0a0d14',
+                            card: '#121824',
+                            border: '#1e293b',
+                            neonGreen: '#10b981',
+                            neonCyan: '#06b6d4',
+                            neonPurple: '#a855f7',
+                            accent: '#3b82f6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        orbitron: ['Orbitron', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0d14;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+        .glow-border {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+        }
+        .glow-border:hover {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+        }
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(18, 24, 36, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0d14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06b6d4;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyber-neonCyan selection:text-black">
+
+    <!-- Canvas de Fondo Interactivo (Circuitos y Nodos) -->
+    <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-10 opacity-30 pointer-events-none"></canvas>
+
+    <!-- NAVEGACIÓN PRINCIPAL (VISITANTE) -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo del Club -->
+                <a href="#" class="flex items-center gap-3 group">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyber-neonCyan to-cyber-neonGreen p-0.5 group-hover:rotate-12 transition-transform duration-300">
+                        <div class="w-full h-full bg-cyber-bg rounded-[10px] flex items-center justify-center">
+                            <i class="fa-solid fa-microchip text-cyber-neonCyan text-xl group-hover:text-cyber-neonGreen transition-colors"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="font-orbitron font-extrabold text-xl tracking-wider text-white">ORURO</span>
+                        <span class="font-orbitron font-bold text-xl text-cyber-neonCyan block -mt-1 text-xs tracking-widest">MECATRÓNICO</span>
+                    </div>
+                </a>
+
+                <!-- Enlaces Navegación Espectador -->
+                <nav class="hidden md:flex items-center gap-8 font-medium text-sm text-gray-300">
+                    <a href="#inicio" class="hover:text-cyber-neonCyan transition-colors">Inicio</a>
+                    <a href="#nosotros" class="hover:text-cyber-neonCyan transition-colors">Nosotros</a>
+                    <a href="#proyectos" class="hover:text-cyber-neonCyan transition-colors">Proyectos</a>
+                    <a href="#herramientas" class="hover:text-cyber-neonCyan transition-colors">Herramientas</a>
+                    <a href="#carnet" class="hover:text-cyber-neonCyan transition-colors">Carnet Digital</a>
+                    <a href="#registro" class="px-4 py-2 bg-gradient-to-r from-cyber-neonCyan to-cyber-neonGreen text-black font-bold rounded-lg shadow-lg hover:brightness-110 transition-all transform hover:-translate-y-0.5">Unirse al Club</a>
+                </nav>
+
+                <!-- Botón Acceso Admin Discreto + Menú Móvil -->
+                <div class="flex items-center gap-3">
+                    <button onclick="openAdminModal()" class="px-3 py-1.5 rounded-lg border border-cyber-border bg-cyber-card/60 text-gray-400 hover:text-cyber-neonGreen hover:border-cyber-neonGreen text-xs font-semibold transition-all flex items-center gap-2" title="Panel de Gestión Administrativa">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span class="hidden sm:inline">Acceso Admin</span>
+                    </button>
+
+                    <!-- Hamburguesa Móvil -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white text-2xl p-2">
+                        <i class="fa-solid fa-bars" id="menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menú Desplegable Móvil -->
+        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-cyber-border px-4 pt-2 pb-6 space-y-3">
+            <a href="#inicio" onclick="toggleMobileMenu()" class="block py-2 text-gray-300 hover:text-cyber-neonCyan">Inicio</a>
+            <a href="#nosotros" onclick="toggleMobileMenu()" class="block py-2 text-gray-300 hover:text-cyber-neonCyan">Nosotros</a>
+            <a href="#proyectos" onclick="toggleMobileMenu()" class="block py-2 text-gray-300 hover:text-cyber-neonCyan">Proyectos</a>
+            <a href="#herramientas" onclick="toggleMobileMenu()" class="block py-2 text-gray-300 hover:text-cyber-neonCyan">Herramientas Interactivas</a>
+            <a href="#carnet" onclick="toggleMobileMenu()" class="block py-2 text-gray-300 hover:text-cyber-neonCyan">Carnet Digital</a>
+            <a href="#registro" onclick="toggleMobileMenu()" class="block py-2 text-center bg-gradient-to-r from-cyber-neonCyan to-cyber-neonGreen text-black font-bold rounded-lg">Unirse al Club</a>
+        </div>
+    </header>
+
+    <main class="space-y-24 pb-20">
+
+        <!-- 1. HERO SECTION -->
+        <section id="inicio" class="relative pt-12 lg:pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyber-neonCyan/30 bg-cyber-neonCyan/10 text-cyber-neonCyan text-xs font-semibold">
+                        <span class="w-2 h-2 rounded-full bg-cyber-neonGreen animate-ping"></span>
+                        Inscripciones Abiertas 2026 • Oruro, Bolivia
+                    </div>
+
+                    <h1 class="text-4xl sm:text-6xl font-orbitron font-extrabold tracking-tight text-white leading-tight">
+                        Innovación & <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-neonCyan via-cyber-neonGreen to-cyber-neonPurple glow-text">
+                            Robótica de Vanguardia
+                        </span>
+                    </h1>
+
+                    <p class="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 font-light">
+                        El núcleo de desarrollo en mecatrónica, automatización e inteligencia artificial. Formamos estudiantes y entusiastas para construir los prototipos tecnológicos del futuro.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                        <a href="#registro" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyber-neonCyan to-cyber-neonGreen text-black font-extrabold text-center hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all">
+                            <i class="fa-solid fa-rocket mr-2"></i> Postular Ahora
+                        </a>
+                        <a href="#proyectos" class="w-full sm:w-auto px-8 py-4 rounded-xl glass-panel border border-cyber-border text-gray-300 font-semibold text-center hover:border-cyber-neonCyan hover:text-white transition-all">
+                            <i class="fa-solid fa-diagram-project mr-2"></i> Ver Proyectos
+                        </a>
+                    </div>
+
+                    <!-- Estadísticas rápidas -->
+                    <div class="grid grid-cols-3 gap-4 pt-8 border-t border-cyber-border/60">
+                        <div>
+                            <p class="font-orbitron text-2xl font-bold text-cyber-neonCyan" id="stat-members">45+</p>
+                            <p class="text-xs text-gray-400">Miembros Activos</p>
+                        </div>
+                        <div>
+                            <p class="font-orbitron text-2xl font-bold text-cyber-neonGreen" id="stat-projects">18</p>
+                            <p class="text-xs text-gray-400">Proyectos Creados</p>
+                        </div>
+                        <div>
+                            <p class="font-orbitron text-2xl font-bold text-cyber-neonPurple">5</p>
+                            <p class="text-xs text-gray-400">Premios Nacionales</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Banner/Animación de Microcontrolador -->
+                <div class="relative flex justify-center">
+                    <div class="w-full max-w-md aspect-square rounded-3xl glass-panel p-8 relative flex flex-col justify-between overflow-hidden border border-cyber-neonCyan/30 glow-border">
+                        <div class="absolute -top-20 -right-20 w-40 h-40 bg-cyber-neonCyan/20 rounded-full blur-3xl"></div>
+                        <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-cyber-neonGreen/20 rounded-full blur-3xl"></div>
+                        
+                        <!-- Simulación Visual de un Microcontrolador -->
+                        <div class="flex justify-between items-center z-10">
+                            <span class="text-xs font-mono text-cyber-neonGreen"><i class="fa-solid fa-wifi animate-pulse"></i> Oruro_Node_MCU_V2</span>
+                            <span class="text-xs font-mono text-gray-400">Status: <span class="text-cyber-neonGreen">ACTIVE</span></span>
+                        </div>
+
+                        <div class="my-auto text-center space-y-4 z-10">
+                            <div class="w-24 h-24 mx-auto rounded-2xl bg-cyber-bg border border-cyber-neonCyan/50 flex items-center justify-center relative group">
+                                <i class="fa-solid fa-robot text-5xl text-cyber-neonCyan group-hover:scale-110 transition-transform"></i>
+                                <span class="absolute -top-1 -right-1 w-3 h-3 bg-cyber-neonGreen rounded-full"></span>
+                            </div>
+                            <p class="font-orbitron text-sm text-gray-300 tracking-wider">MECATRÓNICA • ROBÓTICA • IOT</p>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs font-mono z-10">
+                            <div class="p-2 rounded bg-cyber-bg/80 border border-cyber-border text-gray-300">PWM 1</div>
+                            <div class="p-2 rounded bg-cyber-bg/80 border border-cyber-border text-gray-300">I2C</div>
+                            <div class="p-2 rounded bg-cyber-bg/80 border border-cyber-border text-gray-300">SPI</div>
+                            <div class="p-2 rounded bg-cyber-bg/80 border border-cyber-border text-cyber-neonGreen">GPIO</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. PRESENTACIÓN, MISIÓN Y EVENTOS -->
+        <section id="nosotros" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center space-y-4 mb-12">
+                <h2 class="text-3xl sm:text-4xl font-orbitron font-bold text-white">¿Quiénes Somos?</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Impulsamos la tecnología desde la capital del folklore hacia el mundo.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Misión -->
+                <div class="glass-panel p-6 rounded-2xl border border-cyber-border hover:border-cyber-neonCyan/50 transition-all">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-neonCyan/10 border border-cyber-neonCyan/30 flex items-center justify-center text-cyber-neonCyan text-xl mb-4">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Nuestra Misión</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Fomentar el aprendizaje colaborativo en ingeniería mecatrónica, integrando electrónica, programación, diseño 3D y control automático mediante proyectos prácticos.
+                    </p>
+                </div>
+
+                <!-- Visión -->
+                <div class="glass-panel p-6 rounded-2xl border border-cyber-border hover:border-cyber-neonGreen/50 transition-all">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-neonGreen/10 border border-cyber-neonGreen/30 flex items-center justify-center text-cyber-neonGreen text-xl mb-4">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Nuestra Visión</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Ser el club referente a nivel nacional en desarrollo tecnológico universitario, compitiendo en torneos de robótica y soluciones de automatización industrial.
+                    </p>
+                </div>
+
+                <!-- Próximos Eventos -->
+                <div class="glass-panel p-6 rounded-2xl border border-cyber-border hover:border-cyber-neonPurple/50 transition-all bg-gradient-to-b from-cyber-card to-cyber-bg">
+                    <div class="w-12 h-12 rounded-xl bg-cyber-neonPurple/10 border border-cyber-neonPurple/30 flex items-center justify-center text-cyber-neonPurple text-xl mb-4">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <h3 class="font-orbitron font-bold text-lg text-white mb-2">Próximos Talleres</h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="p-2.5 rounded-lg bg-cyber-bg/80 border border-cyber-border flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-white">Taller de Arduino & IoT</p>
+                                <p class="text-gray-400">Sábado 15 de Noviembre</p>
+                            </div>
+                            <span class="px-2 py-1 rounded bg-cyber-neonCyan/20 text-cyber-neonCyan font-bold">Gratis</span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-cyber-bg/80 border border-cyber-border flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-white">Torneo Mini-Sumo Robot</p>
+                                <p class="text-gray-400">Diciembre 2026</p>
+                            </div>
+                            <span class="px-2 py-1 rounded bg-cyber-neonGreen/20 text-cyber-neonGreen font-bold">Oficial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. GALERÍA DE PROYECTOS -->
+        <section id="proyectos" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                <div>
+                    <h2 class="text-3xl font-orbitron font-bold text-white">Proyectos Destacados</h2>
+                    <p class="text-gray-400 text-sm">Explora las creaciones desarrolladas por los socios del club.</p>
+                </div>
+
+                <!-- Filtros -->
+                <div class="flex flex-wrap gap-2" id="project-filters">
+                    <button onclick="filterProjects('all')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyber-neonCyan text-black transition-all filter-btn active" data-cat="all">Todos</button>
+                    <button onclick="filterProjects('robotica')" class="px-3 py-1.5 rounded-lg text-xs font-semibold glass-panel border border-cyber-border hover:border-cyber-neonCyan text-gray-300 filter-btn" data-cat="robotica">Robótica</button>
+                    <button onclick="filterProjects('iot')" class="px-3 py-1.5 rounded-lg text-xs font-semibold glass-panel border border-cyber-border hover:border-cyber-neonCyan text-gray-300 filter-btn" data-cat="iot">IoT / Domótica</button>
+                    <button onclick="filterProjects('3d')" class="px-3 py-1.5 rounded-lg text-xs font-semibold glass-panel border border-cyber-border hover:border-cyber-neonCyan text-gray-300 filter-btn" data-cat="3d">Impresión 3D</button>
+                </div>
+            </div>
+
+            <!-- Grilla de Proyectos (Doblada mediante JS) -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="projects-grid">
+                <!-- Proyectos inyectados con JavaScript -->
+            </div>
+        </section>
+
+        <!-- 4. HERRAMIENTAS INTERACTIVAS PARA ESPECTADORES -->
+        <section id="herramientas" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center space-y-3 mb-10">
+                <h2 class="text-3xl font-orbitron font-bold text-white">Herramientas Mecatrónicas</h2>
+                <p class="text-gray-400 text-sm">Utilidades rápidas desarrolladas para la comunidad de electrónica.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- 4.1 Calculadora Ley de Ohm -->
+                <div class="glass-panel p-6 rounded-2xl border border-cyber-border">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-cyber-neonCyan/10 border border-cyber-neonCyan/30 flex items-center justify-center text-cyber-neonCyan">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">Calculadora Ley de Ohm</h3>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Voltaje (V)</label>
+                                <input type="number" id="ohm-v" placeholder="Volts" oninput="calculateOhm('v')" class="w-full bg-cyber-bg border border-cyber-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Corriente (I)</label>
+                                <input type="number" id="ohm-i" placeholder="Amperios" oninput="calculateOhm('i')" class="w-full bg-cyber-bg border border-cyber-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Resistencia (R)</label>
+                                <input type="number" id="ohm-r" placeholder="Ohms (Ω)" oninput="calculateOhm('r')" class="w-full bg-cyber-bg border border-cyber-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-cyber-bg/80 border border-cyber-border flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Potencia Disipada (P):</span>
+                            <span class="font-orbitron font-bold text-cyber-neonGreen text-base" id="ohm-p">0.00 Watts</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Ingresa 2 valores cualesquiera para calcular automáticamente el tercero.</p>
+                    </div>
+                </div>
+
+                <!-- 4.2 Código de Colores de Resistencias -->
+                <div class="glass-panel p-6 rounded-2xl border border-cyber-border">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-cyber-neonGreen/10 border border-cyber-neonGreen/30 flex items-center justify-center text-cyber-neonGreen">
+                            <i class="fa-solid fa-palette"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">Código de Colores (4 Bandas)</h3>
+                    </div>
+
+                    <!-- Representación Visual de Resistencia -->
+                    <div class="w-full h-16 bg-[#d2b48c] rounded-full relative flex items-center justify-center my-4 border-2 border-[#b89768] overflow-hidden shadow-inner">
+                        <div class="w-full h-2 bg-gray-400 absolute -z-10"></div>
+                        <div class="flex justify-between w-3/4 h-full items-center">
+                            <div id="res-band1" class="w-6 h-full bg-black"></div>
+                            <div id="res-band2" class="w-6 h-full bg-brown-600" style="background-color: brown;"></div>
+                            <div id="res-band3" class="w-6 h-full bg-red-600" style="background-color: red;"></div>
+                            <div class="w-4"></div>
+                            <div id="res-band4" class="w-6 h-full" style="background-color: gold;"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                            <label class="block text-gray-400 mb-1">Banda 1</label>
+                            <select id="b1-select" onchange="updateResistor()" class="w-full bg-cyber-bg border border-cyber-border rounded px-2 py-1.5 text-white">
+                                <option value="0">Negro (0)</option>
+                                <option value="1" selected>Marrón (1)</option>
+                                <option value="2">Rojo (2)</option>
+                                <option value="3">Naranja (3)</option>
+                                <option value="4">Amarillo (4)</option>
+                                <option value="5">Verde (5)</option>
+                                <option value="6">Azul (6)</option>
+                                <option value="7">Violeta (7)</option>
+                                <option value="8">Gris (8)</option>
+                                <option value="9">Blanco (9)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1">Banda 2</label>
+                            <select id="b2-select" onchange="updateResistor()" class="w-full bg-cyber-bg border border-cyber-border rounded px-2 py-1.5 text-white">
+                                <option value="0" selected>Negro (0)</option>
+                                <option value="1">Marrón (1)</option>
+                                <option value="2">Rojo (2)</option>
+                                <option value="3">Naranja (3)</option>
+                                <option value="4">Amarillo (4)</option>
+                                <option value="5">Verde (5)</option>
+                                <option value="6">Azul (6)</option>
+                                <option value="7">Violeta (7)</option>
+                                <option value="8">Gris (8)</option>
+                                <option value="9">Blanco (9)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1">Multiplicador</label>
+                            <select id="b3-select" onchange="updateResistor()" class="w-full bg-cyber-bg border border-cyber-border rounded px-2 py-1.5 text-white">
+                                <option value="1">x1 Ω</option>
+                                <option value="10">x10 Ω</option>
+                                <option value="100" selected>x100 Ω</option>
+                                <option value="1000">x1 kΩ</option>
+                                <option value="10000">x10 kΩ</option>
+                                <option value="100000">x100 kΩ</option>
+                                <option value="1000000">x1 MΩ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center p-3 bg-cyber-bg/80 rounded-xl border border-cyber-border">
+                        <span class="text-xs text-gray-400 block">Valor Calculado:</span>
+                        <span class="font-orbitron font-extrabold text-cyber-neonCyan text-xl" id="res-result">1.0 kΩ ±5%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. GENERADOR DE CARNET DIGITAL (PÚBLICO) -->
+        <section id="carnet" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-10 items-center">
+                <div class="space-y-4">
+                    <h2 class="text-3xl font-orbitron font-bold text-white">Carnet Digital de Socio</h2>
+                    <p class="text-gray-400 leading-relaxed text-sm">
+                        Genera una credencial oficial simulada del club Oruro Mecatrónico. Tu código QR único contiene tus datos codificados para verificación rápida en talleres e ingresos al laboratorio.
+                    </p>
+
+                    <div class="space-y-3 pt-2">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Nombre Completo</label>
+                            <input type="text" id="card-name-input" placeholder="Ej: Mario Condori" oninput="generateDigitalCard()" class="w-full bg-cyber-bg border border-cyber-border rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Especialidad / Carrera</label>
+                            <input type="text" id="card-role-input" placeholder="Ej: Ing. Mechatronica / Sistemas" oninput="generateDigitalCard()" class="w-full bg-cyber-bg border border-cyber-border rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Credencial Visual -->
+                <div class="flex justify-center">
+                    <div class="w-full max-w-sm rounded-2xl glass-panel border-2 border-cyber-neonCyan/40 p-6 relative overflow-hidden shadow-2xl bg-gradient-to-br from-cyber-card via-cyber-bg to-[#0d1527]">
+                        <div class="flex justify-between items-start border-b border-cyber-border pb-4 mb-4">
+                            <div>
+                                <span class="font-orbitron text-xs font-bold text-cyber-neonCyan tracking-widest block">CLUB MECATRÓNICO</span>
+                                <span class="text-[10px] text-gray-400">ORURO - BOLIVIA</span>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-cyber-neonGreen/20 text-cyber-neonGreen text-[10px] font-bold">SOCIO ACTIVO</span>
+                        </div>
+
+                        <div class="flex gap-4 items-center mb-4">
+                            <div class="w-16 h-16 rounded-xl bg-cyber-border flex items-center justify-center border border-cyber-neonCyan/30 text-cyber-neonCyan text-2xl">
+                                <i class="fa-solid fa-user-astronaut"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-orbitron font-bold text-white text-base leading-tight" id="card-display-name">Tu Nombre Aquí</h4>
+                                <p class="text-xs text-cyber-neonGreen mt-0.5" id="card-display-role">Mecatrónica</p>
+                                <p class="text-[10px] text-gray-500 font-mono mt-1" id="card-display-id">ID: OM-2026-889</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-cyber-border/60">
+                            <div class="text-[10px] text-gray-400 space-y-0.5">
+                                <p>Expedición: <span class="text-gray-300">2026</span></p>
+                                <p>Estado: <span class="text-cyber-neonGreen">Verificado</span></p>
+                            </div>
+                            <div id="qrcode" class="p-1 bg-white rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. FORMULARIO DE REGISTRO DE NUEVOS SOCIOS -->
+        <section id="registro" class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-panel p-8 rounded-3xl border border-cyber-neonCyan/30 relative">
+                <div class="text-center space-y-2 mb-8">
+                    <span class="px-3 py-1 rounded-full bg-cyber-neonGreen/10 text-cyber-neonGreen text-xs font-bold border border-cyber-neonGreen/30">Formulario Oficial</span>
+                    <h2 class="text-3xl font-orbitron font-bold text-white">Inscripción de Nuevos Socios</h2>
+                    <p class="text-gray-400 text-sm">Completa tus datos para unirte a las actividades del club.</p>
+                </div>
+
+                <form id="public-register-form" onsubmit="handlePublicRegistration(event)" class="space-y-4">
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Nombre Completo *</label>
+                            <input type="text" id="reg-name" required placeholder="Ej: Alex Mamani" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Correo Electrónico *</label>
+                            <input type="email" id="reg-email" required placeholder="tu.correo@ejemplo.com" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                        </div>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Teléfono / WhatsApp *</label>
+                            <input type="tel" id="reg-phone" required placeholder="+591 70000000" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Carrera / Institución</label>
+                            <input type="text" id="reg-career" placeholder="Ej: Ing. Mecatrónica UTO" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Área de Interés Principal</label>
+                        <select id="reg-interest" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                            <option value="Robótica Móvil">Robótica Móvil (Sumo/Velocistas)</option>
+                            <option value="Impresión 3D">Diseño e Impresión 3D</option>
+                            <option value="Automatización IoT">Automatización & IoT</option>
+                            <option value="Programación de Microcontroladores">Programación ESP32/STM32/Arduino</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-cyber-neonCyan to-cyber-neonGreen text-black font-extrabold rounded-xl hover:brightness-110 transition-all shadow-lg text-base">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Enviar Postulación
+                    </button>
+                </form>
+
+                <div id="reg-success-msg" class="hidden mt-4 p-4 rounded-xl bg-cyber-neonGreen/10 border border-cyber-neonGreen text-cyber-neonGreen text-center text-sm">
+                    <i class="fa-solid fa-circle-check text-xl mb-1 block"></i>
+                    ¡Registro completado exitosamente! Un administrador revisará tu postulación.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PIE DE PÁGINA (FOOTER) -->
+    <footer class="glass-panel border-t border-cyber-border py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-microchip text-cyber-neonCyan"></i>
+                <span class="font-orbitron text-xs text-gray-400">Oruro Mecatrónico © 2026 • Todos los derechos reservados</span>
+            </div>
+            <div class="flex gap-4 text-gray-400 text-lg">
+                <a href="#" class="hover:text-cyber-neonCyan"><i class="fa-brands fa-facebook"></i></a>
+                <a href="#" class="hover:text-cyber-neonGreen"><i class="fa-brands fa-whatsapp"></i></a>
+                <a href="#" class="hover:text-cyber-neonPurple"><i class="fa-brands fa-github"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE INICIO DE SESIÓN ADMIN -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel max-w-sm w-full p-6 rounded-2xl border border-cyber-neonCyan/40 relative">
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-full bg-cyber-neonCyan/10 border border-cyber-neonCyan/30 mx-auto flex items-center justify-center text-cyber-neonCyan text-xl mb-2">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-orbitron font-bold text-lg text-white">Acceso Administrador</h3>
+                <p class="text-xs text-gray-400">Ingresa la contraseña de gestión</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Clave de Acceso</label>
+                    <input type="password" id="admin-pass" required placeholder="••••••••" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyber-neonCyan">
+                    <p class="text-[10px] text-gray-500 mt-1">(Clave por defecto: <code class="text-cyber-neonGreen">admin123</code>)</p>
+                </div>
+
+                <div id="admin-error-msg" class="hidden text-xs text-red-400 text-center">
+                    Contraseña incorrecta. Inténtalo de nuevo.
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-cyber-neonCyan text-black font-bold rounded-xl hover:bg-cyber-neonGreen transition-colors text-sm">
+                    Ingresar al Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PANEL DE ADMINISTRADOR COMPLETO (MODAL / OVERLAY COMPLETO) -->
+    <div id="admin-panel" class="fixed inset-0 bg-cyber-bg z-50 hidden overflow-y-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            
+            <!-- Barra Superior Admin -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-cyber-border pb-6 gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyber-neonGreen/20 border border-cyber-neonGreen flex items-center justify-center text-cyber-neonGreen">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-orbitron font-bold text-2xl text-white">Panel de Administración</h1>
+                        <p class="text-xs text-gray-400">Gestión de base de datos de socios, eventos y webhooks</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="exportDataCSV()" class="px-3 py-2 rounded-lg bg-cyber-neonGreen/20 border border-cyber-neonGreen text-cyber-neonGreen text-xs font-bold hover:bg-cyber-neonGreen hover:text-black transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> Exportar CSV
+                    </button>
+                    <button onclick="closeAdminPanel()" class="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500 text-red-400 text-xs font-bold hover:bg-red-500 hover:text-white transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+
+            <!-- Configuración Webhook de Google Sheets -->
+            <div class="glass-panel p-6 rounded-2xl border border-cyber-neonPurple/30">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-solid fa-table-cells text-cyber-neonPurple text-xl"></i>
+                    <h3 class="font-orbitron font-bold text-base text-white">Sincronización con Google Sheets / Apps Script</h3>
+                </div>
+                <p class="text-xs text-gray-400 mb-3">Pega la URL del Webhook de tu Google Apps Script para recibir copias automáticas de cada formulario enviado.</p>
+                
+                <div class="flex gap-3">
+                    <input type="url" id="webhook-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 bg-cyber-bg border border-cyber-border rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-cyber-neonPurple">
+                    <button onclick="saveWebhookUrl()" class="px-4 py-2 bg-cyber-neonPurple text-white rounded-xl text-xs font-bold hover:brightness-110">
+                        Guardar Webhook
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Inscritos / Socios -->
+            <div class="glass-panel rounded-2xl border border-cyber-border overflow-hidden">
+                <div class="p-6 border-b border-cyber-border flex justify-between items-center flex-wrap gap-4">
+                    <h3 class="font-orbitron font-bold text-lg text-white">Registros de Socios (<span id="total-reg-count">0</span>)</h3>
+                    <input type="text" id="admin-search" oninput="renderAdminTable()" placeholder="Buscar socio..." class="bg-cyber-bg border border-cyber-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyber-neonCyan">
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-cyber-card text-gray-400 font-orbitron border-b border-cyber-border">
+                            <tr>
+                                <th class="p-4">Fecha</th>
+                                <th class="p-4">Nombre</th>
+                                <th class="p-4">Correo</th>
+                                <th class="p-4">Teléfono</th>
+                                <th class="p-4">Carrera</th>
+                                <th class="p-4">Área Interés</th>
+                                <th class="p-4">Estado</th>
+                                <th class="p-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body" class="divide-y divide-cyber-border/60 text-gray-300">
+                            <!-- Filas inyectadas por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sección de Añadir Nuevo Proyecto como Admin -->
+            <div class="glass-panel p-6 rounded-2xl border border-cyber-border">
+                <h3 class="font-orbitron font-bold text-lg text-white mb-4">Añadir Nuevo Proyecto al Portafolio</h3>
+                <form onsubmit="addNewProject(event)" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <input type="text" id="p-title" required placeholder="Título Proyecto" class="bg-cyber-bg border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                    <input type="text" id="p-author" required placeholder="Autor(es)" class="bg-cyber-bg border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                    <select id="p-cat" class="bg-cyber-bg border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                        <option value="robotica">Robótica</option>
+                        <option value="iot">IoT / Domótica</option>
+                        <option value="3d">Impresión 3D</option>
+                    </select>
+                    <button type="submit" class="bg-cyber-neonCyan text-black font-bold rounded-lg text-xs hover:bg-cyber-neonGreen py-2">
+                        + Agregar Proyecto
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LÓGICO -->
+    <script>
+        // --- 1. BASE DE DATOS LOCAL Y PROYECTOS INICIALES ---
+        const DEFAULT_PROJECTS = [
+            { id: 1, title: 'Brazo Robótico Hídrico 4-DOF', cat: 'robotica', author: 'Mario Condori', icon: 'fa-robot', desc: 'Control servomotores con interfaz GUI en Python.' },
+            { id: 2, title: 'Estación Meteorológica IoT', cat: 'iot', author: 'Sonia Flores', icon: 'fa-cloud-sun-rain', desc: 'Monitoreo ambiental con ESP32 y Dashboard en tiempo real.' },
+            { id: 3, title: 'Prótesis Biónica de Mano 3D', cat: '3d', author: 'Carlos Quispe', icon: 'fa-hand-back-fist', desc: 'Impresión en PETG impulsada por sensores mioeléctricos.' },
+            { id: 4, title: 'Robot Rover de Exploración', cat: 'robotica', author: 'Equipo Club', icon: 'fa-car-battery', desc: 'Navegación autónoma con sistema LiDAR y ROS.' }
+        ];
+
+        const DEFAULT_MEMBERS = [
+            { id: 101, date: '2026-10-12', name: 'Mario Condori', email: 'mario@uto.edu.bo', phone: '+591 71234567', career: 'Ing. Mecatrónica', interest: 'Robótica Móvil', status: 'Aprobado' },
+            { id: 102, date: '2026-10-15', name: 'Laura Vargas', email: 'laura.v@gmail.com', phone: '+591 75543210', career: 'Ing. Sistemas', interest: 'Automatización IoT', status: 'Pendiente' }
+        ];
+
+        // Cargar datos guardados o inicializar
+        let projects = JSON.parse(localStorage.getItem('om_projects')) || DEFAULT_PROJECTS;
+        let members = JSON.parse(localStorage.getItem('om_members')) || DEFAULT_MEMBERS;
+        let webhookUrl = localStorage.getItem('om_webhook') || '';
+
+        // --- 2. RENDERIZADO DE PROYECTOS CON FILTROS ---
+        function renderProjects(filter = 'all') {
+            const container = document.getElementById('projects-grid');
+            container.innerHTML = '';
+
+            const filtered = filter === 'all' ? projects : projects.filter(p => p.cat === filter);
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-6 rounded-2xl border border-cyber-border hover:border-cyber-neonCyan transition-all flex flex-col justify-between group';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-cyber-neonCyan/10 border border-cyber-neonCyan/30 flex items-center justify-center text-cyber-neonCyan text-lg group-hover:scale-110 transition-transform">
+                                <i class="fa-solid ${p.icon || 'fa-microchip'}"></i>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${p.cat === 'robotica' ? 'bg-cyber-neonCyan/20 text-cyber-neonCyan' : p.cat === 'iot' ? 'bg-cyber-neonGreen/20 text-cyber-neonGreen' : 'bg-cyber-neonPurple/20 text-cyber-neonPurple'}">${p.cat}</span>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-white text-base mb-1">${p.title}</h3>
+                        <p class="text-xs text-gray-400 mb-4">${p.desc || 'Desarrollo en laboratorio del club.'}</p>
+                    </div>
+                    <div class="pt-3 border-t border-cyber-border/60 flex justify-between items-center text-xs">
+                        <span class="text-gray-500">Por: <strong class="text-gray-300">${p.author}</strong></span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-cyber-neonCyan opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('stat-projects').innerText = projects.length;
+            document.getElementById('stat-members').innerText = members.length;
+        }
+
+        function filterProjects(cat) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-cyber-neonCyan', 'text-black');
+                btn.classList.add('glass-panel', 'text-gray-300');
+            });
+            const activeBtn = document.querySelector(`.filter-btn[data-cat="${cat}"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('glass-panel', 'text-gray-300');
+                activeBtn.classList.add('bg-cyber-neonCyan', 'text-black');
+            }
+            renderProjects(cat);
+        }
+
+        // --- 3. HERRAMIENTAS INTERACTIVAS (LEY DE OHM Y RESISTENCIAS) ---
+        function calculateOhm(changed) {
+            const v = parseFloat(document.getElementById('ohm-v').value);
+            const i = parseFloat(document.getElementById('ohm-i').value);
+            const r = parseFloat(document.getElementById('ohm-r').value);
+
+            let calculatedV = v, calculatedI = i, calculatedR = r;
+
+            if (changed === 'v' || changed === 'i') {
+                if (!isNaN(v) && !isNaN(i) && i !== 0) calculatedR = v / i;
+            } else if (changed === 'r') {
+                if (!isNaN(v) && !isNaN(r) && r !== 0) calculatedI = v / r;
+            }
+
+            if (!isNaN(calculatedV) && !isNaN(calculatedI)) {
+                document.getElementById('ohm-p').innerText = (calculatedV * calculatedI).toFixed(2) + ' Watts';
+            }
+        }
+
+        const bandColors = {
+            '0': '#000000', '1': '#8B4513', '2': '#FF0000', '3': '#FFA500',
+            '4': '#FFFF00', '5': '#008000', '6': '#0000FF', '7': '#8A2BE2',
+            '8': '#808080', '9': '#FFFFFF'
+        };
+
+        function updateResistor() {
+            const b1 = document.getElementById('b1-select').value;
+            const b2 = document.getElementById('b2-select').value;
+            const mult = parseFloat(document.getElementById('b3-select').value);
+
+            document.getElementById('res-band1').style.backgroundColor = bandColors[b1];
+            document.getElementById('res-band2').style.backgroundColor = bandColors[b2];
+
+            const val = (parseInt(b1 + b2) * mult);
+            let formatted = val >= 1000000 ? (val / 1000000) + ' MΩ' : val >= 1000 ? (val / 1000) + ' kΩ' : val + ' Ω';
+            document.getElementById('res-result').innerText = `${formatted} ±5%`;
+        }
+
+        // --- 4. CARNET DIGITAL DINÁMICO ---
+        let qrObj = null;
+        function generateDigitalCard() {
+            const name = document.getElementById('card-name-input').value.trim() || 'Socio Club';
+            const role = document.getElementById('card-role-input').value.trim() || 'Mecatrónica';
+
+            document.getElementById('card-display-name').innerText = name || 'Tu Nombre Aquí';
+            document.getElementById('card-display-role').innerText = role;
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            try {
+                // Shortened payload and added explicit low error correction level to prevent overflow
+                const payload = `OM|${name.substring(0, 20)}|${role.substring(0, 20)}`;
+                qrObj = new QRCode(qrContainer, {
+                    text: payload,
+                    width: 50,
+                    height: 50,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            } catch (err) {
+                console.warn('QR Code generation overflow handled:', err);
+            }
+        }
+
+        // --- 5. REGISTRO PÚBLICO DE SOCIOS ---
+        function handlePublicRegistration(e) {
+            e.preventDefault();
+            const newMember = {
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                name: document.getElementById('reg-name').value.trim(),
+                email: document.getElementById('reg-email').value.trim(),
+                phone: document.getElementById('reg-phone').value.trim(),
+                career: document.getElementById('reg-career').value.trim() || 'N/A',
+                interest: document.getElementById('reg-interest').value,
+                status: 'Pendiente'
+            };
+
+            members.push(newMember);
+            localStorage.setItem('om_members', JSON.stringify(members));
+
+            // Enviar a Webhook de Google Sheets si existe
+            if (webhookUrl) {
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newMember)
+                }).catch(err => console.log('Webhook error:', err));
+            }
+
+            document.getElementById('public-register-form').reset();
+            document.getElementById('reg-success-msg').classList.remove('hidden');
+            setTimeout(() => document.getElementById('reg-success-msg').classList.add('hidden'), 4000);
+            renderProjects();
+        }
+
+        // --- 6. PANEL DE ADMINISTRADOR & AUTENTICACIÓN ---
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            document.getElementById('admin-error-msg').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'admin123') {
+                closeAdminModal();
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('webhook-url-input').value = webhookUrl;
+                renderAdminTable();
+            } else {
+                document.getElementById('admin-error-msg').classList.remove('hidden');
+            }
+        }
+
+        function closeAdminPanel() {
+            document.getElementById('admin-panel').classList.add('hidden');
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table-body');
+            const search = document.getElementById('admin-search').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = members.filter(m => m.name.toLowerCase().includes(search) || m.email.toLowerCase().includes(search));
+            document.getElementById('total-reg-count').innerText = filtered.length;
+
+            filtered.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-cyber-card/50';
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-[10px]">${m.date}</td>
+                    <td class="p-4 font-semibold text-white">${m.name}</td>
+                    <td class="p-4">${m.email}</td>
+                    <td class="p-4">${m.phone}</td>
+                    <td class="p-4">${m.career}</td>
+                    <td class="p-4">${m.interest}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.status === 'Aprobado' ? 'bg-cyber-neonGreen/20 text-cyber-neonGreen' : 'bg-yellow-500/20 text-yellow-400'}">${m.status}</span>
+                    </td>
+                    <td class="p-4 text-center space-x-2">
+                        <button onclick="toggleStatus(${m.id})" class="text-cyber-neonCyan hover:underline">Cambiar Estado</button>
+                        <button onclick="deleteMember(${m.id})" class="text-red-400 hover:underline">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleStatus(id) {
+            members = members.map(m => m.id === id ? { ...m, status: m.status === 'Aprobado' ? 'Pendiente' : 'Aprobado' } : m);
+            localStorage.setItem('om_members', JSON.stringify(members));
+            renderAdminTable();
+        }
+
+        function deleteMember(id) {
+            members = members.filter(m => m.id !== id);
+            localStorage.setItem('om_members', JSON.stringify(members));
+            renderAdminTable();
+        }
+
+        function saveWebhookUrl() {
+            webhookUrl = document.getElementById('webhook-url-input').value.trim();
+            localStorage.setItem('om_webhook', webhookUrl);
+            alert('Webhook guardado con éxito.');
+        }
+
+        function exportDataCSV() {
+            let csv = 'ID,Fecha,Nombre,Correo,Telefono,Carrera,Interes,Estado\n';
+            members.forEach(m => {
+                csv += `"${m.id}","${m.date}","${m.name}","${m.email}","${m.phone}","${m.career}","${m.interest}","${m.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Socios_Oruro_Mecatronic_${new Date().toISOString().split('T')[0]}.csv`);
+            a.click();
+        }
+
+        function addNewProject(e) {
+            e.preventDefault();
+            const newP = {
+                id: Date.now(),
+                title: document.getElementById('p-title').value,
+                author: document.getElementById('p-author').value,
+                cat: document.getElementById('p-cat').value,
+                desc: 'Nuevo proyecto registrado por la directiva.'
+            };
+            projects.push(newP);
+            localStorage.setItem('om_projects', JSON.stringify(projects));
+            renderProjects();
+            alert('Proyecto añadido correctamente.');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+
+        // --- 7. ANIMACIÓN DE CIRCUITO EN CANVAS ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let nodes = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initNodes();
+        }
+
+        function initNodes() {
+            nodes = [];
+            const count = Math.floor(window.innerWidth / 30);
+            for (let i = 0; i < count; i++) {
+                nodes.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5
+                });
+            }
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+            ctx.fillStyle = '#10b981';
+
+            for (let i = 0; i < nodes.length; i++) {
+                nodes[i].x += nodes[i].vx;
+                nodes[i].y += nodes[i].vy;
+
+                if (nodes[i].x < 0 || nodes[i].x > canvas.width) nodes[i].vx *= -1;
+                if (nodes[i].y < 0 || nodes[i].y > canvas.height) nodes[i].vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(nodes[i].x, nodes[i].y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(drawCanvas);
+        }
+
+        // Inicialización al cargar la ventana
+        window.onload = function() {
+            resizeCanvas();
+            drawCanvas();
+            renderProjects();
+            generateDigitalCard();
+            updateResistor();
+        };
+
+        window.onresize = resizeCanvas;
+    </script>
+</body>
+</html>
