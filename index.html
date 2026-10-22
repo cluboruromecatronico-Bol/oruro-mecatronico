@@ -326,7 +326,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase">Inscribirse y Generar Credencial</button>
+                    <button type="submit" id="btnRegSubmit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase">Inscribirse y Generar Credencial</button>
                 </form>
             </div>
             <div class="md:col-span-5">
@@ -347,7 +347,7 @@
             </div>
         </section>
 
-        <!-- 5. INSCRIPCIÓN EN PUERTA (Solo Admin - IDÉNTICA A INSCRIPCIÓN WEB) -->
+        <!-- 5. INSCRIPCIÓN EN PUERTA (Solo Admin) -->
         <section id="sec-puerta" class="hidden grid md:grid-cols-12 gap-8">
             <div class="md:col-span-7 bg-amber-950/20 p-6 rounded-2xl border border-amber-500/40">
                 <h2 class="text-2xl font-bold text-amber-400 mb-2"><i class="fa-solid fa-bolt mr-2"></i>Inscripción de Última Hora (En Puerta)</h2>
@@ -426,7 +426,7 @@
                         <input type="text" id="puertaProyecto" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                     </div>
 
-                    <button type="submit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar en Puerta y Generar Credencial</button>
+                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar en Puerta y Generar Credencial</button>
                 </form>
             </div>
             <div class="md:col-span-5">
@@ -458,22 +458,25 @@
             <div id="juradoPanelContent" class="hidden bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h2 class="text-xl font-bold text-indigo-400"><i class="fa-solid fa-clipboard-list mr-2"></i>Panel de Control - Jurados</h2>
-                    <select id="filtroJurado" onchange="renderTablaJurados()" class="bg-slate-950 border border-indigo-500/40 rounded p-2 text-xs text-white">
-                        <option value="TODAS">Todas las Categorías Oficiales (13)</option>
-                        <option value="Minisumo Autónomo">Minisumo Autónomo</option>
-                        <option value="Minisumo RC">Minisumo RC</option>
-                        <option value="Legosumo">Legosumo</option>
-                        <option value="Microsumo">Microsumo</option>
-                        <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
-                        <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
-                        <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
-                        <option value="Robofut">Robofut</option>
-                        <option value="Laberinto">Laberinto</option>
-                        <option value="Carrera de Insectos">Carrera de Insectos</option>
-                        <option value="Otto Robotdance">Otto Robotdance</option>
-                        <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica</option>
-                        <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
-                    </select>
+                    <div class="flex gap-2">
+                        <button onclick="cargarDatosDesdeNube()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold"><i class="fa-solid fa-rotate mr-1"></i> Actualizar Lista</button>
+                        <select id="filtroJurado" onchange="renderTablaJurados()" class="bg-slate-950 border border-indigo-500/40 rounded p-2 text-xs text-white">
+                            <option value="TODAS">Todas las Categorías Oficiales (13)</option>
+                            <option value="Minisumo Autónomo">Minisumo Autónomo</option>
+                            <option value="Minisumo RC">Minisumo RC</option>
+                            <option value="Legosumo">Legosumo</option>
+                            <option value="Microsumo">Microsumo</option>
+                            <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
+                            <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
+                            <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
+                            <option value="Robofut">Robofut</option>
+                            <option value="Laberinto">Laberinto</option>
+                            <option value="Carrera de Insectos">Carrera de Insectos</option>
+                            <option value="Otto Robotdance">Otto Robotdance</option>
+                            <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica</option>
+                            <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs text-slate-300">
@@ -504,7 +507,10 @@
             <div id="adminPanelContent" class="hidden bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold text-rose-400"><i class="fa-solid fa-sliders mr-2"></i>Gestión General de Base de Datos</h2>
-                    <button onclick="exportarCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded"><i class="fa-solid fa-download mr-1"></i> Exportar Lista (CSV)</button>
+                    <div class="flex gap-2">
+                        <button onclick="cargarDatosDesdeNube()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold"><i class="fa-solid fa-rotate mr-1"></i> Sincronizar Nube</button>
+                        <button onclick="exportarCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded"><i class="fa-solid fa-download mr-1"></i> Exportar Lista (CSV)</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs text-slate-300">
@@ -555,7 +561,9 @@
         let participantes = JSON.parse(localStorage.getItem('om_encuentro_2026')) || [];
         let qrCodeObj = null;
         let qrCodePuertaObj = null;
-        const urlGoogleAppsScript = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT_TERMINADA_EN_EXEC";
+        
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        const urlGoogleAppsScript = "https://script.google.com/macros/s/AKfycbyJmOKIT9OxWANb2L5MbqRhWqUnQmrNGpuJZCTZJ54-o9V8pAof-JFmWqiFd1VETiow/exec";
 
         document.addEventListener("DOMContentLoaded", () => {
             qrCodeObj = new QRCode(document.getElementById("qrcodeCanvas"), {
@@ -568,6 +576,7 @@
             generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
             iniciarEscanerQR();
             initCanvasBackground();
+            cargarDatosDesdeNube();
         });
 
         function switchTab(tab) {
@@ -720,7 +729,25 @@
                     mode: "no-cors",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(datos)
+                }).then(() => {
+                    cargarDatosDesdeNube();
                 }).catch(err => console.log("Servicio en nube opcional:", err));
+            }
+        }
+
+        function cargarDatosDesdeNube() {
+            if (urlGoogleAppsScript.startsWith("http")) {
+                fetch(urlGoogleAppsScript)
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        participantes = data;
+                        localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
+                        renderTablaJurados();
+                        renderTablaAdmin();
+                    }
+                })
+                .catch(err => console.log("Cargando desde almacenamiento local:", err));
             }
         }
 
@@ -729,6 +756,7 @@
             if(pass === "jurado2026") {
                 document.getElementById('juradoLoginBox').classList.add('hidden');
                 document.getElementById('juradoPanelContent').classList.remove('hidden');
+                cargarDatosDesdeNube();
                 renderTablaJurados();
             } else {
                 alert("Contraseña de jurado incorrecta.");
@@ -760,6 +788,7 @@
                 document.getElementById('adminLoginBox').classList.add('hidden');
                 document.getElementById('adminPanelContent').classList.remove('hidden');
                 document.getElementById('navBtnPuerta').classList.remove('hidden');
+                cargarDatosDesdeNube();
                 renderTablaAdmin();
             } else {
                 alert("Contraseña de administrador incorrecta.");
@@ -787,6 +816,7 @@
         function cambiarEstadoPago(index) {
             participantes[index].pago = participantes[index].pago === "Confirmado" ? "Pendiente" : "Confirmado";
             localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
+            enviarANubeSiExiste(participantes[index]);
             renderTablaAdmin();
         }
 
@@ -817,7 +847,12 @@
                 box.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
                 box.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl mb-1 block"></i> ⚠️ REFRIGERIO YA ENTREGADO<br><span class="text-xs">El equipo de ${registrosPersona[0].nombre} ya reclamó su refrigerio.</span>`;
             } else {
-                participantes.forEach(item => { if(item.ci.includes(ciIngresado.trim())) item.refrigerioEntregado = true; });
+                participantes.forEach(item => { 
+                    if(item.ci.includes(ciIngresado.trim())) {
+                        item.refrigerioEntregado = true;
+                        enviarANubeSiExiste(item);
+                    }
+                });
                 localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
                 box.classList.add('bg-emerald-900/80', 'border-emerald-500', 'text-emerald-200');
                 box.innerHTML = `<i class="fa-solid fa-circle-check text-xl mb-1 block"></i> ¡REFRIGERIO ENTREGADO!<br><span class="text-xs">Entregado a: <strong>${registrosPersona[0].nombre}</strong></span>`;
