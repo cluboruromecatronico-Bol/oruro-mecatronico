@@ -16,8 +16,8 @@
     <style>
         @media print {
             body * { visibility: hidden; }
-            #printableCardArea, #printableCardArea * { visibility: visible; }
-            #printableCardArea {
+            #printableCardArea, #printableCardArea *, #printableCardAreaPuerta, #printableCardAreaPuerta * { visibility: visible; }
+            #printableCardArea, #printableCardAreaPuerta {
                 position: absolute; left: 0; top: 0; width: 100%;
                 display: flex; justify-content: center; align-items: center;
             }
@@ -70,10 +70,10 @@
                     <p class="text-[10px] text-slate-500 mt-2">Flyer Oficial del Evento</p>
                 </div>
 
-                <div class="flex justify-center gap-4 text-xl text-cyan-400 pt-2">
+                <div class="flex justify-center gap-6 text-2xl text-cyan-400 pt-2">
                     <a href="https://www.facebook.com/share/1D6ig4wCpq/" target="_blank" class="hover:text-cyan-300 transition" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
                     <a href="https://www.tiktok.com/@club.oruro.mecatr?_r=1&_t=ZS-9AlYwjAHgl5" target="_blank" class="hover:text-cyan-300 transition" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://chat.whatsapp.com/Fj8BahwbtmmLpoDhrquyLP" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition" title="Grupo de WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition" title="Grupo de WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
                 </div>
 
                 <div class="flex justify-center gap-4 pt-2">
@@ -129,7 +129,7 @@
                         </a>
                     </div>
                     <div class="bg-white p-2 rounded-xl text-center border shadow-md shrink-0">
-                        <img src="qr_whatsapp.png" alt="QR WhatsApp" class="w-28 h-28 mx-auto object-contain" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://chat.whatsapp.com';">
+                        <img src="qr_whatsapp.png" alt="QR WhatsApp" class="w-28 h-28 mx-auto object-contain" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45';">
                         <span class="text-[9px] text-slate-600 font-bold block mt-1">Escanear para Unirte</span>
                     </div>
                 </div>
@@ -279,7 +279,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Subdivisión *</label>
-                            <select id="regSubdivision" onchange="verificarSubdivisionFNI()" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                            <select id="regSubdivision" onchange="verificarSubdivisionFNI('regSubdivision', 'fniComprobanteContainer')" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                                 <option value="Amateur (65 Bs)">Amateur (65 Bs)</option>
                                 <option value="Libre (110 Bs)">Libre (110 Bs)</option>
                                 <option value="FNI Amateur (55 Bs)">FNI Amateur (55 Bs)</option>
@@ -290,7 +290,7 @@
 
                     <div>
                         <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Número de Integrantes (1 a 4) *</label>
-                        <select id="numIntegrantes" onchange="generarCamposIntegrantes()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                        <select id="numIntegrantes" onchange="generarCamposIntegrantes('numIntegrantes', 'integrantesContainer')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                             <option value="1">1 Integrante</option>
                             <option value="2">2 Integrantes</option>
                             <option value="3">3 Integrantes</option>
@@ -347,26 +347,103 @@
             </div>
         </section>
 
-        <!-- 5. INSCRIPCIÓN EN PUERTA -->
-        <section id="sec-puerta" class="hidden space-y-6">
-            <div class="max-w-xl mx-auto bg-amber-950/30 p-6 rounded-2xl border border-amber-500/40">
+        <!-- 5. INSCRIPCIÓN EN PUERTA (Solo Admin - IDÉNTICA A INSCRIPCIÓN WEB) -->
+        <section id="sec-puerta" class="hidden grid md:grid-cols-12 gap-8">
+            <div class="md:col-span-7 bg-amber-950/20 p-6 rounded-2xl border border-amber-500/40">
                 <h2 class="text-2xl font-bold text-amber-400 mb-2"><i class="fa-solid fa-bolt mr-2"></i>Inscripción de Última Hora (En Puerta)</h2>
-                <form onsubmit="procesarInscripcionPuerta(event)" class="space-y-3">
-                    <input type="text" id="puertaCi" required placeholder="C.I. Integrantes" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs">
-                    <input type="text" id="puertaNombre" required placeholder="Nombres Completos" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs">
-                    <input type="text" id="puertaTutor" required placeholder="Nombre del Tutor / Asesor" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs">
-                    <select id="puertaCategoria" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs">
-                        <option value="Minisumo Autónomo">Minisumo Autónomo</option>
-                        <option value="Minisumo RC">Minisumo RC</option>
-                        <option value="Robofut">Robofut</option>
-                    </select>
-                    <select id="puertaSubdivision" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs">
-                        <option value="Amateur (65 Bs)">Amateur (65 Bs)</option>
-                        <option value="Libre (110 Bs)">Libre (110 Bs)</option>
-                    </select>
-                    <input type="text" id="puertaProyecto" required placeholder="Nombre del Equipo" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs">
-                    <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-xs uppercase">Registrar y Habilitar Ingreso</button>
+                
+                <div class="mb-4 p-3 bg-amber-950/40 rounded-xl border border-amber-500/40 text-xs text-amber-200 space-y-1">
+                    <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> REQUISITO DE INTEGRANTES:</p>
+                    <p>• Los equipos pueden tener <strong>hasta 3 integrantes</strong> para participar en <strong>todas las categorías</strong>.</p>
+                    <p>• Excepcionalmente, la categoría de <strong>Creatividad e Innovación Tecnológica</strong> es la única que acepta <strong>hasta 4 integrantes</strong>.</p>
+                </div>
+
+                <div class="mb-6 p-4 bg-slate-950 rounded-xl border border-amber-500/30 text-xs space-y-3">
+                    <p class="font-bold text-amber-400"><i class="fa-solid fa-coins mr-1"></i> Cobro Físico en Módulo de Puerta:</p>
+                    <div class="grid grid-cols-2 gap-2 text-slate-300">
+                        <div>• Amateur: <strong>65 Bs</strong></div>
+                        <div>• Libre: <strong>110 Bs</strong></div>
+                        <div>• FNI Amateur: <strong>55 Bs</strong></div>
+                        <div>• FNI Libre: <strong>90 Bs</strong></div>
+                    </div>
+                </div>
+
+                <form id="puertaForm" onsubmit="procesarInscripcionPuerta(event)" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Categoría Oficial *</label>
+                            <select id="puertaCategoria" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                                <option value="Minisumo Autónomo">Minisumo Autónomo</option>
+                                <option value="Minisumo RC">Minisumo RC</option>
+                                <option value="Legosumo">Legosumo</option>
+                                <option value="Microsumo">Microsumo</option>
+                                <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
+                                <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
+                                <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
+                                <option value="Robofut">Robofut</option>
+                                <option value="Laberinto">Laberinto</option>
+                                <option value="Carrera de Insectos">Carrera de Insectos</option>
+                                <option value="Otto Robotdance">Otto Robotdance</option>
+                                <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica (Única de 4)</option>
+                                <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Subdivisión *</label>
+                            <select id="puertaSubdivision" onchange="verificarSubdivisionFNI('puertaSubdivision', 'puertaFniContainer')" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                                <option value="Amateur (65 Bs)">Amateur (65 Bs)</option>
+                                <option value="Libre (110 Bs)">Libre (110 Bs)</option>
+                                <option value="FNI Amateur (55 Bs)">FNI Amateur (55 Bs)</option>
+                                <option value="FNI Libre (90 Bs)">FNI Libre (90 Bs)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Número de Integrantes (1 a 4) *</label>
+                        <select id="puertaNumIntegrantes" onchange="generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                            <option value="1">1 Integrante</option>
+                            <option value="2">2 Integrantes</option>
+                            <option value="3">3 Integrantes</option>
+                            <option value="4">4 Integrantes (Solo para Innovación)</option>
+                        </select>
+                    </div>
+
+                    <div id="puertaIntegrantesContainer" class="space-y-3 border-t border-slate-800 pt-3"></div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre Completo del Tutor / Asesor *</label>
+                        <input type="text" id="puertaTutor" required placeholder="Ej. Ing. Carlos Mendoza (Obligatorio para menores de edad)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                    </div>
+
+                    <div id="puertaFniContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
+                        <label class="block text-xs font-bold text-rose-300 uppercase">Verificación Matrícula / Carnet Universitario FNI (Revisado presencial) *</label>
+                        <input type="text" id="puertaFniCarnet" placeholder="Número de Matrícula FNI o Verificado Presencialmente" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre del Equipo *</label>
+                        <input type="text" id="puertaProyecto" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar en Puerta y Generar Credencial</button>
                 </form>
+            </div>
+            <div class="md:col-span-5">
+                <div class="sticky top-24">
+                    <h3 class="text-lg font-bold text-amber-400 mb-3"><i class="fa-solid fa-id-card mr-2"></i> Credencial Impresa en Puerta</h3>
+                    <div id="printableCardAreaPuerta">
+                        <div class="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border-2 border-amber-500/50 shadow-2xl text-center max-w-sm mx-auto">
+                            <span class="text-xs font-bold text-amber-400 uppercase">Club Oruro Mecatrónico - En Puerta</span>
+                            <h4 id="cardNombrePuerta" class="text-base font-bold text-white mt-2">Nombres de Integrantes</h4>
+                            <p id="cardEquipoPuerta" class="text-xs text-amber-400 font-semibold mt-1">Equipo: -</p>
+                            <p id="cardCategoriaPuerta" class="text-xs text-cyan-400 mt-1">Categoría</p>
+                            <div class="bg-white p-2 rounded-xl inline-block my-3"><div id="qrcodeCanvasPuerta"></div></div>
+                            <p class="text-[10px] text-slate-400 font-mono">C.I.: <span id="cardCiPuerta">-------</span></p>
+                        </div>
+                    </div>
+                    <button onclick="window.print()" class="no-print mt-4 w-full py-2 bg-slate-800 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-semibold"><i class="fa-solid fa-print"></i> Imprimir Credencial Puerta</button>
+                </div>
             </div>
         </section>
 
@@ -379,13 +456,23 @@
             </div>
 
             <div id="juradoPanelContent" class="hidden bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h2 class="text-xl font-bold text-indigo-400"><i class="fa-solid fa-clipboard-list mr-2"></i>Panel de Control - Jurados</h2>
                     <select id="filtroJurado" onchange="renderTablaJurados()" class="bg-slate-950 border border-indigo-500/40 rounded p-2 text-xs text-white">
-                        <option value="TODAS">Todas las Categorías</option>
+                        <option value="TODAS">Todas las Categorías Oficiales (13)</option>
                         <option value="Minisumo Autónomo">Minisumo Autónomo</option>
                         <option value="Minisumo RC">Minisumo RC</option>
+                        <option value="Legosumo">Legosumo</option>
+                        <option value="Microsumo">Microsumo</option>
+                        <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
+                        <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
+                        <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
                         <option value="Robofut">Robofut</option>
+                        <option value="Laberinto">Laberinto</option>
+                        <option value="Carrera de Insectos">Carrera de Insectos</option>
+                        <option value="Otto Robotdance">Otto Robotdance</option>
+                        <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica</option>
+                        <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
                     </select>
                 </div>
                 <div class="overflow-x-auto">
@@ -393,9 +480,9 @@
                         <thead class="bg-slate-950 text-indigo-400 uppercase border-b border-slate-800">
                             <tr>
                                 <th class="p-2.5">Integrantes</th>
-                                <th class="p-2.5">C.I.</th>
-                                <th class="p-2.5">Tutor</th>
-                                <th class="p-2.5">Categoría</th>
+                                <th class="p-2.5">C.I. Integrantes</th>
+                                <th class="p-2.5">Tutor / Asesor</th>
+                                <th class="p-2.5">Categoría / Subdivisión</th>
                                 <th class="p-2.5">Equipo</th>
                                 <th class="p-2.5 text-center">Estado Pago</th>
                             </tr>
@@ -455,9 +542,9 @@
         <footer class="mt-16 pt-8 border-t border-slate-800/80 text-center text-xs text-slate-400 space-y-3">
             <p><strong>Club Oruro Mecatrónico</strong> | Facultad Nacional de Ingeniería (FNI - UTO)</p>
             <div class="flex justify-center gap-4 text-slate-400">
-                <a href="https://facebook.com" target="_blank" class="hover:text-cyan-400"><i class="fa-brands fa-facebook"></i> Facebook</a>
-                <a href="https://tiktok.com" target="_blank" class="hover:text-cyan-400"><i class="fa-brands fa-tiktok"></i> TikTok</a>
-                <a href="https://chat.whatsapp.com" target="_blank" class="hover:text-emerald-400"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                <a href="https://www.facebook.com/share/1D6ig4wCpq/" target="_blank" class="hover:text-cyan-400"><i class="fa-brands fa-facebook"></i> Facebook</a>
+                <a href="https://www.tiktok.com/@club.oruro.mecatr?_r=1&_t=ZS-9AlYwjAHgl5" target="_blank" class="hover:text-cyan-400"><i class="fa-brands fa-tiktok"></i> TikTok</a>
+                <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" class="hover:text-emerald-400"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
             </div>
             <p class="text-[10px] text-slate-600">Oruro - Bolivia</p>
         </footer>
@@ -467,13 +554,18 @@
     <script>
         let participantes = JSON.parse(localStorage.getItem('om_encuentro_2026')) || [];
         let qrCodeObj = null;
+        let qrCodePuertaObj = null;
         const urlGoogleAppsScript = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT_TERMINADA_EN_EXEC";
 
         document.addEventListener("DOMContentLoaded", () => {
             qrCodeObj = new QRCode(document.getElementById("qrcodeCanvas"), {
                 text: "123456", width: 100, height: 100, correctLevel: QRCode.CorrectLevel.L
             });
-            generarCamposIntegrantes();
+            qrCodePuertaObj = new QRCode(document.getElementById("qrcodeCanvasPuerta"), {
+                text: "123456", width: 100, height: 100, correctLevel: QRCode.CorrectLevel.L
+            });
+            generarCamposIntegrantes('numIntegrantes', 'integrantesContainer');
+            generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
             iniciarEscanerQR();
             initCanvasBackground();
         });
@@ -485,26 +577,26 @@
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
         }
 
-        function generarCamposIntegrantes() {
-            const num = parseInt(document.getElementById('numIntegrantes').value);
-            const container = document.getElementById('integrantesContainer');
+        function generarCamposIntegrantes(selectId, containerId) {
+            const num = parseInt(document.getElementById(selectId).value);
+            const container = document.getElementById(containerId);
             container.innerHTML = "";
             for(let i = 1; i <= num; i++) {
                 container.innerHTML += `
                     <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-2">
                         <span class="text-xs font-bold text-cyan-400">Integrante ${i}</span>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="nombreInt${i}" required placeholder="Nombre Completo" class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
-                            <input type="text" id="ciInt${i}" required placeholder="C.I." class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
+                            <input type="text" id="${containerId}_nombreInt${i}" required placeholder="Nombre Completo" class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
+                            <input type="text" id="${containerId}_ciInt${i}" required placeholder="C.I." class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
                         </div>
                     </div>
                 `;
             }
         }
 
-        function verificarSubdivisionFNI() {
-            const sub = document.getElementById('regSubdivision').value;
-            const fniBox = document.getElementById('fniComprobanteContainer');
+        function verificarSubdivisionFNI(subSelectId, boxId) {
+            const sub = document.getElementById(subSelectId).value;
+            const fniBox = document.getElementById(boxId);
             if(sub.includes("FNI")) {
                 fniBox.classList.remove('hidden');
             } else {
@@ -540,8 +632,8 @@
             let cisArr = [];
 
             for(let i = 1; i <= num; i++) {
-                nombresArr.push(document.getElementById(`nombreInt${i}`).value.trim());
-                cisArr.push(document.getElementById(`ciInt${i}`).value.trim());
+                nombresArr.push(document.getElementById(`integrantesContainer_nombreInt${i}`).value.trim());
+                cisArr.push(document.getElementById(`integrantesContainer_ciInt${i}`).value.trim());
             }
 
             const subdivision = document.getElementById('regSubdivision').value;
@@ -553,25 +645,39 @@
             const cisStr = cisArr.join(", ");
             const tieneFoto = fotoInput.files.length > 0 ? "Foto Cargada (Verificando)" : "Sin Comprobante";
 
-            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, tieneFoto, tipo);
+            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, tieneFoto, tipo, false);
         }
 
         function procesarInscripcionPuerta(e) {
             e.preventDefault();
-            const ci = document.getElementById('puertaCi').value.trim();
-            const nombre = document.getElementById('puertaNombre').value.trim();
-            const tutor = document.getElementById('puertaTutor').value.trim();
+            const num = parseInt(document.getElementById('puertaNumIntegrantes').value);
             const categoria = document.getElementById('puertaCategoria').value;
+
+            if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
+                alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
+                return;
+            }
+
+            let nombresArr = [];
+            let cisArr = [];
+
+            for(let i = 1; i <= num; i++) {
+                nombresArr.push(document.getElementById(`puertaIntegrantesContainer_nombreInt${i}`).value.trim());
+                cisArr.push(document.getElementById(`puertaIntegrantesContainer_ciInt${i}`).value.trim());
+            }
+
             const subdivision = document.getElementById('puertaSubdivision').value;
+            const tutor = document.getElementById('puertaTutor').value.trim();
             const equipo = document.getElementById('puertaProyecto').value.trim();
 
-            guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta");
+            const nombresStr = nombresArr.join(" / ");
+            const cisStr = cisArr.join(", ");
+
+            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true);
             alert(`¡Inscripción en puerta exitosa para el equipo ${equipo}!`);
-            e.target.reset();
-            switchTab('inicio');
         }
 
-        function guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro) {
+        function guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta) {
             const registroPrevio = participantes.find(p => p.ci === ci);
             const refrigerioPrevio = registroPrevio ? registroPrevio.refrigerioEntregado : false;
             const existeIndex = participantes.findIndex(p => p.ci === ci && p.categoria === categoria);
@@ -590,12 +696,21 @@
             localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
             enviarANubeSiExiste(item);
 
-            document.getElementById('cardNombre').innerText = nombre;
-            document.getElementById('cardEquipo').innerText = "Equipo: " + equipo;
-            document.getElementById('cardCategoria').innerText = categoria;
-            document.getElementById('cardCi').innerText = ci;
-            qrCodeObj.clear();
-            qrCodeObj.makeCode(ci);
+            if(esPuerta) {
+                document.getElementById('cardNombrePuerta').innerText = nombre;
+                document.getElementById('cardEquipoPuerta').innerText = "Equipo: " + equipo;
+                document.getElementById('cardCategoriaPuerta').innerText = categoria + " (" + subdivision + ")";
+                document.getElementById('cardCiPuerta').innerText = ci;
+                qrCodePuertaObj.clear();
+                qrCodePuertaObj.makeCode(ci);
+            } else {
+                document.getElementById('cardNombre').innerText = nombre;
+                document.getElementById('cardEquipo').innerText = "Equipo: " + equipo;
+                document.getElementById('cardCategoria').innerText = categoria + " (" + subdivision + ")";
+                document.getElementById('cardCi').innerText = ci;
+                qrCodeObj.clear();
+                qrCodeObj.makeCode(ci);
+            }
         }
 
         function enviarANubeSiExiste(datos) {
@@ -631,9 +746,9 @@
                             <td class="p-2.5 font-semibold text-white">${p.nombre}</td>
                             <td class="p-2.5 font-mono">${p.ci}</td>
                             <td class="p-2.5 text-slate-300">${p.tutor}</td>
-                            <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${p.categoria}</span></td>
+                            <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${p.categoria} (${p.subdivision})</span></td>
                             <td class="p-2.5 font-semibold text-amber-400">${p.equipo}</td>
-                            <td class="p-2.5 text-center"><span class="text-amber-400">${p.pago}</span></td>
+                            <td class="p-2.5 text-center"><span class="text-amber-400 font-bold">${p.pago}</span></td>
                         </tr>`;
                 }
             });
