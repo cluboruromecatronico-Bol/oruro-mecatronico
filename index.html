@@ -12,7 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- HTML5 QR Code Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <!-- HTML2Canvas para descargar credencial como imagen -->
+    <!-- jsPDF para exportar Credenciales en PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- HTML2Canvas para renderizar elementos a PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -48,7 +50,7 @@
                 <button onclick="switchTab('institucional')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"><i class="fa-solid fa-users mr-1"></i> Quiénes Somos</button>
                 <button onclick="switchTab('convocatoria')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"><i class="fa-solid fa-file-lines mr-1"></i> Convocatoria</button>
                 <button onclick="switchTab('registro')" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Inscripción Web</button>
-                <button id="navBtnPuerta" onclick="switchTab('puerta')" class="hidden px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition"><i class="fa-solid fa-bolt mr-1"></i> Inscripción Puerta (Admin)</button>
+                <button id="navBtnPuerta" onclick="switchTab('puerta')" class="hidden px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition"><i class="fa-solid fa-bolt mr-1"></i> Registro Rápido (Puerta)</button>
                 <button onclick="switchTab('jurados')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition"><i class="fa-solid fa-user-ninja mr-1"></i> Jurados</button>
                 <button onclick="switchTab('admin')" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition"><i class="fa-solid fa-lock mr-1"></i> Admin</button>
                 <button onclick="switchTab('logistica')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition"><i class="fa-solid fa-utensils mr-1"></i> Refrigerio</button>
@@ -141,7 +143,7 @@
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-book-bookmark text-cyan-400"></i> Reglamentos Técnicos Oficiales (17 Subcategorías)
                     </h3>
-                    <p class="text-slate-400 text-xs">Haz clic en cada opción para visualizar el reglamento correspondiente:</p>
+                    <p class="text-slate-400 text-xs">Haz clic en cada opción para visualizar el reglamento o la base técnica correspondiente:</p>
                     
                     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                         <a href="MINISUMO_AUTÓNOMO_AMATEUR_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
@@ -258,17 +260,17 @@
                     </div>
                 </div>
 
-                <!-- Mensaje de Éxito al Finalizar Registro -->
-                <div id="msgInscripcionExitosa" class="hidden p-6 bg-emerald-950/80 border-2 border-emerald-500 rounded-2xl text-center space-y-4">
+                <!-- Alerta / Confirmación de Registro Exitoso -->
+                <div id="msgInscripcionExitosa" class="hidden p-6 bg-emerald-950/90 border-2 border-emerald-500 rounded-2xl text-center space-y-4 shadow-2xl">
                     <i class="fa-solid fa-circle-check text-5xl text-emerald-400"></i>
-                    <h3 class="text-2xl font-bold text-white">¡Inscripción Enviada con Éxito!</h3>
-                    <p class="text-sm text-emerald-200">
-                        Los datos de tu equipo e imágenes adjuntas han sido recibidos en el sistema. El comité organizador revisará tu comprobante de pago.
+                    <h3 class="text-2xl font-bold text-white">¡Inscripción Registrada con Éxito!</h3>
+                    <p class="text-sm text-emerald-200 leading-relaxed">
+                        Los datos de tu equipo e imágenes adjuntas han sido recibidos correctamente en la base de datos.
                     </p>
-                    <div class="p-3 bg-slate-950/60 rounded-xl border border-emerald-500/30 text-xs text-slate-300">
-                        <i class="fa-solid fa-lock text-amber-400 mr-1"></i> <strong>Aviso de Credenciales:</strong> Tus credenciales oficiales de competidor serán verificadas y entregadas de manera privada por los administradores en el área de acreditación.
+                    <div class="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 text-xs text-slate-300">
+                        <i class="fa-solid fa-shield-halved text-cyan-400 mr-1"></i> <strong>Aviso Importante:</strong> Tus credenciales oficiales serán verificadas y emitidas por los administradores una vez confirmado el comprobante de pago.
                     </div>
-                    <button onclick="reiniciarFormularioWeb()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition">Registrar Otro Equipo</button>
+                    <button onclick="reiniciarFormularioWeb()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">Inscribir Otro Equipo</button>
                 </div>
 
                 <form id="eventForm" onsubmit="procesarInscripcion(event, 'Online')" class="space-y-4">
@@ -340,30 +342,20 @@
                         </div>
                     </div>
 
-                    <button type="submit" id="btnRegSubmit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase">Completar Inscripción Online</button>
+                    <button type="submit" id="btnRegSubmit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase">Enviar Inscripción Online</button>
                 </form>
             </div>
         </section>
 
-        <!-- 5. INSCRIPCIÓN EN PUERTA -->
+        <!-- 5. REGISTRO RÁPIDO EN PUERTA -->
         <section id="sec-puerta" class="hidden grid md:grid-cols-12 gap-8">
             <div class="md:col-span-6 bg-amber-950/20 p-6 rounded-2xl border border-amber-500/40">
-                <h2 class="text-2xl font-bold text-amber-400 mb-2"><i class="fa-solid fa-bolt mr-2"></i>Inscripción de Última Hora (En Puerta)</h2>
+                <h2 class="text-2xl font-bold text-amber-400 mb-2"><i class="fa-solid fa-bolt mr-2"></i>Registro Rápido (En Puerta)</h2>
                 
                 <div class="mb-4 p-3 bg-amber-950/40 rounded-xl border border-amber-500/40 text-xs text-amber-200 space-y-1">
                     <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> REQUISITO DE INTEGRANTES:</p>
-                    <p>• Los equipos pueden tener <strong>hasta 3 integrantes</strong> para participar en <strong>todas las categorías</strong>.</p>
-                    <p>• Excepcionalmente, la categoría de <strong>Creatividad e Innovación Tecnológica</strong> es la única que acepta <strong>hasta 4 integrantes</strong>.</p>
-                </div>
-
-                <div class="mb-6 p-4 bg-slate-950 rounded-xl border border-amber-500/30 text-xs space-y-3">
-                    <p class="font-bold text-amber-400"><i class="fa-solid fa-coins mr-1"></i> Cobro Físico en Módulo de Puerta:</p>
-                    <div class="grid grid-cols-2 gap-2 text-slate-300">
-                        <div>• Amateur: <strong>65 Bs</strong></div>
-                        <div>• Libre: <strong>110 Bs</strong></div>
-                        <div>• FNI Amateur: <strong>55 Bs</strong></div>
-                        <div>• FNI Libre: <strong>90 Bs</strong></div>
-                    </div>
+                    <p>• Hasta <strong>3 integrantes</strong> para categorías generales.</p>
+                    <p>• Hasta <strong>4 integrantes</strong> únicamente en <strong>Creatividad e Innovación</strong>.</p>
                 </div>
 
                 <form id="puertaForm" onsubmit="procesarInscripcionPuerta(event)" class="space-y-4">
@@ -411,7 +403,7 @@
 
                     <div>
                         <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre Completo del Tutor / Asesor *</label>
-                        <input type="text" id="puertaTutor" required placeholder="Ej. Ing. Carlos Mendoza (Obligatorio para menores de edad)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                        <input type="text" id="puertaTutor" required placeholder="Ej. Ing. Carlos Mendoza" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                     </div>
 
                     <div id="puertaFniContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
@@ -424,25 +416,28 @@
                         <input type="text" id="puertaProyecto" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                     </div>
 
-                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar en Puerta y Generar Credenciales</button>
+                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar y Generar Credenciales Automáticas</button>
                 </form>
             </div>
 
-            <!-- Área de Credenciales Individuales para Puerta -->
+            <!-- Generación e Impresión Directa en Puerta -->
             <div class="md:col-span-6">
                 <div class="sticky top-24 space-y-4">
-                    <h3 class="text-lg font-bold text-amber-400"><i class="fa-solid fa-id-card mr-2"></i> Credenciales Individuales (Puerta)</h3>
-                    <p class="text-xs text-slate-400">Se genera una credencial única con QR por cada integrante del equipo.</p>
+                    <h3 class="text-lg font-bold text-amber-400"><i class="fa-solid fa-id-card mr-2"></i> Credenciales Directas (1 por Integrante)</h3>
                     
+                    <div id="msgPuertaExito" class="hidden p-3 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold">
+                        <i class="fa-solid fa-check-circle mr-1"></i> ¡Registro exitoso! Credenciales generadas:
+                    </div>
+
                     <div id="printableCardAreaPuerta" class="space-y-4">
                         <div class="text-slate-500 text-xs italic text-center p-6 border border-dashed border-slate-800 rounded-2xl">
-                            Completa el registro para previsualizar las credenciales de los integrantes aquí.
+                            Completa el registro rápido para generar e imprimir automáticamente las credenciales aquí.
                         </div>
                     </div>
 
                     <div id="btnPuertaAcciones" class="hidden space-y-2">
-                        <button onclick="descargarCredencialesImagen('printableCardAreaPuerta')" class="no-print w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-file-image"></i> Descargar Credenciales como Imagen (PNG)
+                        <button onclick="descargarCredencialesPDF('printableCardAreaPuerta', 'Credenciales_Registro_Rapido')" class="no-print w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i> Descargar Credenciales (PDF)
                         </button>
                         <button onclick="window.print()" class="no-print w-full py-2 bg-slate-800 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-print"></i> Imprimir Credenciales
@@ -488,7 +483,7 @@
                         <thead class="bg-slate-950 text-indigo-400 uppercase border-b border-slate-800">
                             <tr>
                                 <th class="p-2.5">Integrantes</th>
-                                <th class="p-2.5">C.I. / Teléfonos</th>
+                                <th class="p-2.5">C.I. / Teléfono</th>
                                 <th class="p-2.5">Tutor / Asesor</th>
                                 <th class="p-2.5">Categoría / Subdivisión</th>
                                 <th class="p-2.5">Equipo</th>
@@ -501,7 +496,7 @@
             </div>
         </section>
 
-        <!-- 7. PANEL DE ADMINISTRADORES Y IMPRESIÓN PRIVADA DE CREDENCIALES -->
+        <!-- 7. PANEL DE ADMINISTRADORES -->
         <section id="sec-admin" class="hidden space-y-6">
             <div class="max-w-xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-rose-500/40 text-center" id="adminLoginBox">
                 <h2 class="text-xl font-bold text-rose-400 mb-2"><i class="fa-solid fa-lock mr-2"></i>Acceso para Administradores</h2>
@@ -523,12 +518,12 @@
                             <thead class="bg-slate-950 text-rose-400 uppercase border-b border-slate-800">
                                 <tr>
                                     <th class="p-2.5">Integrantes</th>
-                                    <th class="p-2.5">C.I. / Teléfonos</th>
+                                    <th class="p-2.5">C.I. / Teléfono</th>
                                     <th class="p-2.5">Tutor</th>
                                     <th class="p-2.5">Categoría / Sub</th>
                                     <th class="p-2.5">Equipo</th>
                                     <th class="p-2.5 text-center">Comprobantes</th>
-                                    <th class="p-2.5 text-center">Acción / Credencial Privada</th>
+                                    <th class="p-2.5 text-center">Acción / Credenciales (PDF)</th>
                                 </tr>
                             </thead>
                             <tbody id="tablaAdminBody" class="divide-y divide-slate-800/50"></tbody>
@@ -539,17 +534,17 @@
                 <!-- Visor Privado de Credenciales para Administradores -->
                 <div id="adminCredencialBox" class="hidden bg-slate-900/90 p-6 rounded-2xl border border-cyan-500/40 space-y-4">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-cyan-400"><i class="fa-solid fa-id-card mr-2"></i> Generador Privado de Credenciales (Admin)</h3>
+                        <h3 class="text-lg font-bold text-cyan-400"><i class="fa-solid fa-id-card mr-2"></i> Generador Privado de Credenciales (PDF)</h3>
                         <button onclick="document.getElementById('adminCredencialBox').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i> Cerrar</button>
                     </div>
                     
                     <div id="printableCardAreaAdmin" class="flex flex-wrap justify-center gap-4 p-4 bg-slate-950 rounded-xl border border-slate-800">
-                        <!-- Se insertan dinámicamente las credenciales individuales -->
+                        <!-- Se insertan dinámicamente las credenciales en PDF -->
                     </div>
 
                     <div class="flex justify-center gap-4 pt-2">
-                        <button onclick="descargarCredencialesImagen('printableCardAreaAdmin')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2">
-                            <i class="fa-solid fa-file-image"></i> Descargar Imagen (PNG)
+                        <button onclick="descargarCredencialesPDF('printableCardAreaAdmin', 'Credenciales_Oficiales')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i> Descargar Credenciales en PDF
                         </button>
                         <button onclick="window.print()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-2">
                             <i class="fa-solid fa-print"></i> Imprimir Credenciales
@@ -559,17 +554,27 @@
             </div>
         </section>
 
-        <!-- 8. CONTROL DE REFRIGERIO -->
+        <!-- 8. CONTROL DE REFRIGERIO (PROTEGIDO CON CONTRASEÑA Y CONTROL POR DÍA) -->
         <section id="sec-logistica" class="hidden space-y-6">
-            <div class="max-w-xl mx-auto bg-slate-900/80 p-6 rounded-2xl border border-slate-800 text-center space-y-4">
-                <h2 class="text-2xl font-bold text-emerald-400"><i class="fa-solid fa-utensils mr-2"></i>Control Único de Refrigerio</h2>
+            <!-- Login Privado para Logística / Refrigerio -->
+            <div class="max-w-xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-emerald-500/40 text-center" id="logisticaLoginBox">
+                <h2 class="text-xl font-bold text-emerald-400 mb-2"><i class="fa-solid fa-lock mr-2"></i>Acceso a Control de Refrigerio</h2>
+                <p class="text-xs text-slate-400 mb-4">Módulo reservado para el personal de logística del evento.</p>
+                <input type="password" id="passLogistica" placeholder="Contraseña de Logística" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs mb-3 text-center">
+                <button onclick="verificarLoginLogistica()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs">Ingresar a Refrigerios</button>
+            </div>
+
+            <!-- Panel de Control de Refrigerio -->
+            <div id="logisticaPanelContent" class="hidden max-w-xl mx-auto bg-slate-900/80 p-6 rounded-2xl border border-slate-800 text-center space-y-4">
+                <h2 class="text-2xl font-bold text-emerald-400"><i class="fa-solid fa-utensils mr-2"></i>Control de Refrigerios (2 Días)</h2>
                 
-                <!-- Explicación del Código QR -->
-                <div class="p-3 bg-slate-950 rounded-xl border border-cyan-500/30 text-xs text-slate-300 text-left space-y-1">
-                    <p class="font-bold text-cyan-400"><i class="fa-solid fa-circle-info mr-1"></i> ¿Cómo funciona el Código QR?</p>
-                    <p>• El QR codifica el <strong>C.I. individual</strong> del competidor impreso en su credencial.</p>
-                    <p>• Al escanear con la cámara o ingresar manualmente, el sistema valida en tiempo real si ya recibió su refrigerio.</p>
-                    <p>• Si se intenta escanear por segunda vez, el sistema **bloquea la entrega automáticamente** registrando la alerta en rojo.</p>
+                <!-- Selección del Día de Evento -->
+                <div class="p-3 bg-slate-950 rounded-xl border border-emerald-500/30 space-y-2 text-left">
+                    <label class="block text-xs font-bold text-emerald-400 uppercase"><i class="fa-solid fa-calendar-day mr-1"></i> Seleccionar Día del Evento *</label>
+                    <select id="selectDiaRefrigerio" class="w-full bg-slate-900 border border-emerald-500/50 rounded-lg p-2 text-white text-xs font-bold">
+                        <option value="dia1">Día 1: Sábado 14 de Noviembre de 2026</option>
+                        <option value="dia2">Día 2: Domingo 15 de Noviembre de 2026</option>
+                    </select>
                 </div>
 
                 <div id="reader" class="bg-slate-950 rounded-xl overflow-hidden border border-slate-800 mx-auto max-w-xs"></div>
@@ -605,7 +610,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             generarCamposIntegrantes('numIntegrantes', 'integrantesContainer');
             generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
-            iniciarEscanerQR();
             initCanvasBackground();
             cargarDatosDesdeNube();
         });
@@ -617,7 +621,7 @@
             document.getElementById(`sec-${tab}`).classList.remove('hidden');
         }
 
-        // Genera campos dinámicos pidiendo también el número de Celular / WhatsApp
+        // Genera campos solicitando también el número de Celular / WhatsApp
         function generarCamposIntegrantes(selectId, containerId) {
             const num = parseInt(document.getElementById(selectId).value);
             const container = document.getElementById(containerId);
@@ -674,7 +678,7 @@
             e.preventDefault();
             const btn = document.getElementById('btnRegSubmit');
             btn.disabled = true;
-            btn.innerText = "Guardando Datos e Imágenes...";
+            btn.innerText = "Enviando Inscripción...";
 
             const num = parseInt(document.getElementById('numIntegrantes').value);
             const categoria = document.getElementById('regCategoria').value;
@@ -682,7 +686,7 @@
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
                 btn.disabled = false;
-                btn.innerText = "Completar Inscripción Online";
+                btn.innerText = "Enviar Inscripción Online";
                 return;
             }
 
@@ -714,15 +718,20 @@
             }
 
             const nombresStr = nombresArr.join(" / ");
-            const cisStr = cisArr.join(", ");
-            const celsStr = celsArr.join(", ");
+            
+            // Se agrupa el número de celular con el C.I. para no alterar las columnas de Sheets
+            let cisConCelular = [];
+            cisArr.forEach((ciVal, idx) => {
+                cisConCelular.push(`${ciVal} (Cel: ${celsArr[idx] || '-'})`);
+            });
+            const cisStr = cisConCelular.join(", ");
 
-            guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, false, fotoPagoBase64, fotoFniBase64);
+            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, false, fotoPagoBase64, fotoFniBase64);
             
             btn.disabled = false;
-            btn.innerText = "Completar Inscripción Online";
+            btn.innerText = "Enviar Inscripción Online";
 
-            // Mostrar Mensaje de Éxito
+            // Mostrar Mensaje de Confirmación de Éxito
             document.getElementById('eventForm').classList.add('hidden');
             document.getElementById('msgInscripcionExitosa').classList.remove('hidden');
         }
@@ -738,7 +747,7 @@
             e.preventDefault();
             const btn = document.getElementById('btnPuertaSubmit');
             btn.disabled = true;
-            btn.innerText = "Guardando...";
+            btn.innerText = "Procesando...";
 
             const num = parseInt(document.getElementById('puertaNumIntegrantes').value);
             const categoria = document.getElementById('puertaCategoria').value;
@@ -746,7 +755,7 @@
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
                 btn.disabled = false;
-                btn.innerText = "Registrar en Puerta y Generar Credenciales";
+                btn.innerText = "Registrar y Generar Credenciales Automáticas";
                 return;
             }
 
@@ -771,31 +780,39 @@
             }
 
             const nombresStr = nombresArr.join(" / ");
-            const cisStr = cisArr.join(", ");
-            const celsStr = celsArr.join(", ");
+            let cisConCelular = [];
+            cisArr.forEach((ciVal, idx) => {
+                cisConCelular.push(`${ciVal} (Cel: ${celsArr[idx] || '-'})`);
+            });
+            const cisStr = cisConCelular.join(", ");
 
-            const itemGuardado = guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true, "", fotoFniBase64);
+            const itemGuardado = guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true, "", fotoFniBase64);
             
-            // Generar credenciales individuales para puerta
+            // Generación e Impresión Directa de Credenciales
             generarTarjetasIndividuales(itemGuardado, 'printableCardAreaPuerta');
+            document.getElementById('msgPuertaExito').classList.remove('hidden');
             document.getElementById('btnPuertaAcciones').classList.remove('hidden');
 
-            alert(`¡Inscripción en puerta exitosa para el equipo ${equipo}!`);
             btn.disabled = false;
-            btn.innerText = "Registrar en Puerta y Generar Credenciales";
+            btn.innerText = "Registrar y Generar Credenciales Automáticas";
         }
 
-        function guardarParticipante(ci, nombre, celular, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta, fotoPagoBase64 = "", fotoFniBase64 = "") {
+        function guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta, fotoPagoBase64 = "", fotoFniBase64 = "") {
             const registroPrevio = participantes.find(p => p.ci === ci);
-            const refrigerioPrevio = registroPrevio ? registroPrevio.refrigerioEntregado : false;
+            
+            // Estado de refrigerio independiente por Día 1 y Día 2
+            const refDia1 = registroPrevio && registroPrevio.refrigerioDia1 ? registroPrevio.refrigerioDia1 : false;
+            const refDia2 = registroPrevio && registroPrevio.refrigerioDia2 ? registroPrevio.refrigerioDia2 : false;
+            
             const existeIndex = participantes.findIndex(p => p.ci === ci && p.categoria === categoria);
 
             const item = {
                 id: ci + "-" + categoria,
-                ci, nombre, celular: celular || "", tutor, categoria, subdivision, equipo,
+                ci, nombre, tutor, categoria, subdivision, equipo,
                 pago: pagoEstado,
                 tipo: tipoRegistro,
-                refrigerioEntregado: refrigerioPrevio,
+                refrigerioDia1: refDia1,
+                refrigerioDia2: refDia2,
                 fotoPagoBase64,
                 fotoFniBase64,
                 documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
@@ -809,7 +826,7 @@
             return item;
         }
 
-        // Genera tarjetas/credenciales individuales para cada integrante (1, 2, 3 o 4)
+        // Genera credenciales individuales (1 por cada integrante)
         function generarTarjetasIndividuales(item, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
@@ -835,7 +852,7 @@
                             <div id="${cardId}"></div>
                         </div>
                         
-                        <p class="text-[11px] text-slate-300 font-mono font-bold">C.I.: ${ciIndividual}</p>
+                        <p class="text-[11px] text-slate-300 font-mono font-bold">${ciIndividual}</p>
                         <p class="text-[9px] text-slate-500 mt-1">Tutor: ${item.tutor}</p>
                     </div>
                 `;
@@ -843,20 +860,37 @@
 
                 setTimeout(() => {
                     new QRCode(document.getElementById(cardId), {
-                        text: ciIndividual, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.L
+                        text: ciIndividual.split(' ')[0], width: 90, height: 90, correctLevel: QRCode.CorrectLevel.L
                     });
                 }, 100);
             });
         }
 
-        // Permite descargar el bloque de credenciales visibles como Imagen PNG
-        function descargarCredencialesImagen(containerId) {
+        // Descarga las credenciales en archivo PDF
+        function descargarCredencialesPDF(containerId, nombreArchivo) {
+            const { jsPDF } = window.jspdf;
             const element = document.getElementById(containerId);
-            html2canvas(element, { backgroundColor: "#020617" }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Credenciales_Mecatronica_${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+
+            html2canvas(element, { backgroundColor: "#020617", scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 190;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 10;
+
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save(`${nombreArchivo}_${Date.now()}.pdf`);
             });
         }
 
@@ -914,10 +948,7 @@
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-950/50">
                             <td class="p-2.5 font-semibold text-white">${p.nombre || 'Sin Nombre'}</td>
-                            <td class="p-2.5 font-mono text-[11px]">
-                                <div>CI: ${p.ci || '-'}</div>
-                                <div class="text-emerald-400 font-sans"><i class="fa-brands fa-whatsapp mr-1"></i>${p.celular || 'Sin Celular'}</div>
-                            </td>
+                            <td class="p-2.5 font-mono text-[11px]">${p.ci || '-'}</td>
                             <td class="p-2.5 text-slate-300">${p.tutor || '-'}</td>
                             <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${p.categoria || '-'} (${p.subdivision || '-'})</span></td>
                             <td class="p-2.5 font-semibold text-amber-400">${p.equipo || '-'}</td>
@@ -955,17 +986,14 @@
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-950/50">
                         <td class="p-2.5 font-semibold text-white">${p.nombre || 'Sin Nombre'}</td>
-                        <td class="p-2.5 font-mono text-[11px]">
-                            <div>CI: ${p.ci || '-'}</div>
-                            <div class="text-emerald-400 font-sans"><i class="fa-brands fa-whatsapp mr-1"></i>${p.celular || 'Sin Celular'}</div>
-                        </td>
+                        <td class="p-2.5 font-mono text-[11px]">${p.ci || '-'}</td>
                         <td class="p-2.5 text-slate-300">${p.tutor || '-'}</td>
                         <td class="p-2.5">${p.categoria || '-'} (${p.subdivision || '-'})</td>
                         <td class="p-2.5 font-semibold text-cyan-400">${p.equipo || '-'}</td>
                         <td class="p-2.5 text-center">${linkPago}${linkFni}</td>
                         <td class="p-2.5 text-center space-y-1">
                             <button onclick="cambiarEstadoPago(${index})" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-[10px] block w-full">Aprobar / Editar</button>
-                            <button onclick="verCredencialPrivadaAdmin(${index})" class="px-2 py-1 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[10px] block w-full"><i class="fa-solid fa-id-card mr-1"></i> Ver Credenciales</button>
+                            <button onclick="verCredencialPrivadaAdmin(${index})" class="px-2 py-1 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[10px] block w-full"><i class="fa-solid fa-file-pdf mr-1"></i> Credenciales (PDF)</button>
                         </td>
                     </tr>`;
             });
@@ -989,9 +1017,9 @@
         }
 
         function exportarCSV() {
-            let csv = "Nombres,CI,Celular,Tutor,Categoria,Subdivision,Equipo,Pago/Comprobante,Tipo,DocumentoFNI\n";
+            let csv = "Nombres,CI_y_Celulares,Tutor,Categoria,Subdivision,Equipo,Pago/Comprobante,Tipo,DocumentoFNI\n";
             participantes.forEach(p => {
-                csv += `"${p.nombre}","${p.ci}","${p.celular || ''}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}","${p.documentoFni || ''}"\n`;
+                csv += `"${p.nombre}","${p.ci}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}","${p.documentoFni || ''}"\n`;
             });
             let blob = new Blob([csv], { type: 'text/csv' });
             let link = document.createElement('a');
@@ -1000,30 +1028,48 @@
             link.click();
         }
 
+        // Login para Módulo de Logística y Refrigerios
+        function verificarLoginLogistica() {
+            const pass = document.getElementById('passLogistica').value;
+            if(pass === "logistica2026") {
+                document.getElementById('logisticaLoginBox').classList.add('hidden');
+                document.getElementById('logisticaPanelContent').classList.remove('hidden');
+                iniciarEscanerQR();
+            } else {
+                alert("Contraseña de logística incorrecta.");
+            }
+        }
+
+        // Validación de Refrigerio por Día (14 o 15 de Noviembre)
         function procesarValidacionRefrigerio(ciIngresado) {
             const box = document.getElementById('alertaRefrigerio');
+            const diaSeleccionado = document.getElementById('selectDiaRefrigerio').value;
+            const campoDia = (diaSeleccionado === 'dia1') ? 'refrigerioDia1' : 'refrigerioDia2';
+            const etiquetaDia = (diaSeleccionado === 'dia1') ? 'Día 1 (14 Nov)' : 'Día 2 (15 Nov)';
+
             box.classList.remove('hidden', 'bg-emerald-900/80', 'border-emerald-500', 'text-emerald-200', 'bg-rose-900/80', 'border-rose-500', 'text-rose-200');
+            
             const registrosPersona = participantes.filter(item => item.ci.includes(ciIngresado.trim()));
 
             if(registrosPersona.length === 0) {
                 box.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
-                box.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> C.I. ${ciIngresado} no encontrado en la base de datos.`;
+                box.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> C.I. ${ciIngresado} no registrado.`;
                 return;
             }
 
-            if(registrosPersona.some(p => p.refrigerioEntregado)) {
+            if(registrosPersona.some(p => p[campoDia])) {
                 box.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
-                box.innerHTML = `<i class="fa-solid fa-circle-xmark text-2xl mb-1 block"></i> ⚠️ REFRIGERIO YA ENTREGADO<br><span class="text-xs">El competidor con C.I. ${ciIngresado} ya recibió su refrigerio.</span>`;
+                box.innerHTML = `<i class="fa-solid fa-circle-xmark text-2xl mb-1 block"></i> ⚠️ REFRIGERIO YA ENTREGADO (${etiquetaDia})<br><span class="text-xs">El competidor con C.I. ${ciIngresado} ya reclamó su refrigerio del ${etiquetaDia}.</span>`;
             } else {
                 participantes.forEach(item => { 
                     if(item.ci.includes(ciIngresado.trim())) {
-                        item.refrigerioEntregado = true;
+                        item[campoDia] = true;
                         enviarANubeSiExiste(item);
                     }
                 });
                 localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
                 box.classList.add('bg-emerald-900/80', 'border-emerald-500', 'text-emerald-200');
-                box.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1 block"></i> ¡REFRIGERIO ENTREGADO EXITOSAMENTE!<br><span class="text-xs">Registrado para: <strong>${registrosPersona[0].nombre}</strong></span>`;
+                box.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1 block"></i> ¡REFRIGERIO ENTREGADO EXITOSAMENTE!<br><span class="text-xs">Corresponde a: <strong>${registrosPersona[0].nombre}</strong> (${etiquetaDia})</span>`;
             }
         }
 
