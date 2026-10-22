@@ -233,7 +233,7 @@
                 <div class="mb-4 p-3 bg-amber-950/40 rounded-xl border border-amber-500/40 text-xs text-amber-200 space-y-1">
                     <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> REQUISITO DE INTEGRANTES:</p>
                     <p>• Los equipos pueden tener <strong>hasta 3 integrantes</strong> para participar en <strong>todas las categorías</strong>.</p>
-                    <p>• Excepcionalmente, la categoría de <strong>Creatividad e Innovación Tecnológica</strong> es la única que acepta <strong>hasta 4 integrantes</strong>.</p>
+                    <p>• Excepcionalmente, la categoría de <strong>Creatividad e Innovación Tecnológica</strong> est la única que acepta <strong>hasta 4 integrantes</strong>.</p>
                 </div>
 
                 <div class="mb-6 p-4 bg-slate-950 rounded-xl border border-cyan-500/30 text-xs space-y-3">
@@ -417,8 +417,8 @@
                     </div>
 
                     <div id="puertaFniContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
-                        <label class="block text-xs font-bold text-rose-300 uppercase">Verificación Matrícula / Carnet Universitario FNI (Revisado presencial) *</label>
-                        <input type="text" id="puertaFniCarnet" placeholder="Número de Matrícula FNI o Verificado Presencialmente" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white">
+                        <label class="block text-xs font-bold text-rose-300 uppercase">Adjuntar Comprobante / Matrícula FNI (Opcional en puerta) *</label>
+                        <input type="file" id="puertaFniDocumento" accept="image/*,.pdf" class="w-full bg-slate-950 border border-slate-700 rounded p-1 text-xs text-white">
                     </div>
 
                     <div>
@@ -521,6 +521,7 @@
                                 <th class="p-2.5">Tutor</th>
                                 <th class="p-2.5">Categoría / Sub</th>
                                 <th class="p-2.5">Equipo</th>
+                                <th class="p-2.5 text-center">Comprobantes</th>
                                 <th class="p-2.5 text-center">Acción / Estado Pago</th>
                             </tr>
                         </thead>
@@ -562,7 +563,7 @@
         let qrCodeObj = null;
         let qrCodePuertaObj = null;
         
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT TERMINADA EN /exec
         const urlGoogleAppsScript = "https://script.google.com/macros/s/AKfycbyJmOKIT9OxWANb2L5MbqRhWqUnQmrNGpuJZCTZJ54-o9V8pAof-JFmWqiFd1VETiow/exec";
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -627,13 +628,29 @@
             }
         }
 
-        function procesarInscripcion(e, tipo) {
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) { resolve(""); return; }
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function procesarInscripcion(e, tipo) {
             e.preventDefault();
+            const btn = document.getElementById('btnRegSubmit');
+            btn.disabled = true;
+            btn.innerText = "Guardando e Imágenes...";
+
             const num = parseInt(document.getElementById('numIntegrantes').value);
             const categoria = document.getElementById('regCategoria').value;
 
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
+                btn.disabled = false;
+                btn.innerText = "Inscribirse y Generar Credencial";
                 return;
             }
 
@@ -648,22 +665,41 @@
             const subdivision = document.getElementById('regSubdivision').value;
             const tutor = document.getElementById('regTutor').value.trim();
             const equipo = document.getElementById('regEquipo').value.trim();
+            
             const fotoInput = document.getElementById('regFotoComprobante');
+            const fniInput = document.getElementById('fniDocumento');
+
+            let fotoPagoBase64 = "";
+            let fotoFniBase64 = "";
+
+            if (fotoInput.files.length > 0) {
+                fotoPagoBase64 = await fileToBase64(fotoInput.files[0]);
+            }
+            if (fniInput && fniInput.files.length > 0) {
+                fotoFniBase64 = await fileToBase64(fniInput.files[0]);
+            }
 
             const nombresStr = nombresArr.join(" / ");
             const cisStr = cisArr.join(", ");
-            const tieneFoto = fotoInput.files.length > 0 ? "Foto Cargada (Verificando)" : "Sin Comprobante";
 
-            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, tieneFoto, tipo, false);
+            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, false, fotoPagoBase64, fotoFniBase64);
+            btn.disabled = false;
+            btn.innerText = "Inscribirse y Generar Credencial";
         }
 
-        function procesarInscripcionPuerta(e) {
+        async function procesarInscripcionPuerta(e) {
             e.preventDefault();
+            const btn = document.getElementById('btnPuertaSubmit');
+            btn.disabled = true;
+            btn.innerText = "Guardando...";
+
             const num = parseInt(document.getElementById('puertaNumIntegrantes').value);
             const categoria = document.getElementById('puertaCategoria').value;
 
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
+                btn.disabled = false;
+                btn.innerText = "Registrar en Puerta y Generar Credencial";
                 return;
             }
 
@@ -679,14 +715,22 @@
             const tutor = document.getElementById('puertaTutor').value.trim();
             const equipo = document.getElementById('puertaProyecto').value.trim();
 
+            const fniInput = document.getElementById('puertaFniDocumento');
+            let fotoFniBase64 = "";
+            if (fniInput && fniInput.files.length > 0) {
+                fotoFniBase64 = await fileToBase64(fniInput.files[0]);
+            }
+
             const nombresStr = nombresArr.join(" / ");
             const cisStr = cisArr.join(", ");
 
-            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true);
+            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true, "", fotoFniBase64);
             alert(`¡Inscripción en puerta exitosa para el equipo ${equipo}!`);
+            btn.disabled = false;
+            btn.innerText = "Registrar en Puerta y Generar Credencial";
         }
 
-        function guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta) {
+        function guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta, fotoPagoBase64 = "", fotoFniBase64 = "") {
             const registroPrevio = participantes.find(p => p.ci === ci);
             const refrigerioPrevio = registroPrevio ? registroPrevio.refrigerioEntregado : false;
             const existeIndex = participantes.findIndex(p => p.ci === ci && p.categoria === categoria);
@@ -696,7 +740,10 @@
                 ci, nombre, tutor, categoria, subdivision, equipo,
                 pago: pagoEstado,
                 tipo: tipoRegistro,
-                refrigerioEntregado: refrigerioPrevio
+                refrigerioEntregado: refrigerioPrevio,
+                fotoPagoBase64,
+                fotoFniBase64,
+                documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
             };
 
             if(existeIndex >= 0) participantes[existeIndex] = item;
@@ -730,7 +777,7 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(datos)
                 }).then(() => {
-                    cargarDatosDesdeNube();
+                    setTimeout(cargarDatosDesdeNube, 2500);
                 }).catch(err => console.log("Servicio en nube opcional:", err));
             }
         }
@@ -769,6 +816,10 @@
             tbody.innerHTML = "";
             participantes.forEach(p => {
                 if(filtro === "TODAS" || p.categoria === filtro) {
+                    const pagoDisplay = (p.pago && p.pago.startsWith("http")) ? 
+                        `<a href="${p.pago}" target="_blank" class="text-cyan-400 underline font-bold"><i class="fa-solid fa-file-image mr-1"></i>Ver Pago</a>` : 
+                        `<span class="text-amber-400 font-bold">${p.pago}</span>`;
+
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-950/50">
                             <td class="p-2.5 font-semibold text-white">${p.nombre}</td>
@@ -776,7 +827,7 @@
                             <td class="p-2.5 text-slate-300">${p.tutor}</td>
                             <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${p.categoria} (${p.subdivision})</span></td>
                             <td class="p-2.5 font-semibold text-amber-400">${p.equipo}</td>
-                            <td class="p-2.5 text-center"><span class="text-amber-400 font-bold">${p.pago}</span></td>
+                            <td class="p-2.5 text-center">${pagoDisplay}</td>
                         </tr>`;
                 }
             });
@@ -799,6 +850,14 @@
             const tbody = document.getElementById('tablaAdminBody');
             tbody.innerHTML = "";
             participantes.forEach((p, index) => {
+                const linkPago = (p.pago && p.pago.startsWith("http")) ? 
+                    `<a href="${p.pago}" target="_blank" class="text-cyan-400 underline font-bold block"><i class="fa-solid fa-image mr-1"></i>Comprobante Pago</a>` : 
+                    `<span class="text-slate-400">${p.pago}</span>`;
+
+                const linkFni = (p.documentoFni && p.documentoFni.startsWith("http")) ? 
+                    `<a href="${p.documentoFni}" target="_blank" class="text-emerald-400 underline font-bold block mt-1"><i class="fa-solid fa-id-card mr-1"></i>Doc FNI</a>` : 
+                    `<span class="text-slate-500 text-[10px] block mt-1">${p.documentoFni || 'Sin FNI'}</span>`;
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-950/50">
                         <td class="p-2.5 font-semibold text-white">${p.nombre}</td>
@@ -806,24 +865,28 @@
                         <td class="p-2.5 text-slate-300">${p.tutor}</td>
                         <td class="p-2.5">${p.categoria} (${p.subdivision})</td>
                         <td class="p-2.5 font-semibold text-cyan-400">${p.equipo}</td>
+                        <td class="p-2.5 text-center">${linkPago}${linkFni}</td>
                         <td class="p-2.5 text-center">
-                            <button onclick="cambiarEstadoPago(${index})" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-[10px]">${p.pago}</button>
+                            <button onclick="cambiarEstadoPago(${index})" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-[10px]">Aprobar / Editar</button>
                         </td>
                     </tr>`;
             });
         }
 
         function cambiarEstadoPago(index) {
-            participantes[index].pago = participantes[index].pago === "Confirmado" ? "Pendiente" : "Confirmado";
-            localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-            enviarANubeSiExiste(participantes[index]);
-            renderTablaAdmin();
+            const nuevoEstado = prompt("Ingresa el estado del pago o deja la URL:", participantes[index].pago);
+            if (nuevoEstado !== null) {
+                participantes[index].pago = nuevoEstado;
+                localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
+                enviarANubeSiExiste(participantes[index]);
+                renderTablaAdmin();
+            }
         }
 
         function exportarCSV() {
-            let csv = "Nombres,CI,Tutor,Categoria,Subdivision,Equipo,Pago,Tipo\n";
+            let csv = "Nombres,CI,Tutor,Categoria,Subdivision,Equipo,Pago/Comprobante,Tipo,DocumentoFNI\n";
             participantes.forEach(p => {
-                csv += `"${p.nombre}","${p.ci}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}"\n`;
+                csv += `"${p.nombre}","${p.ci}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}","${p.documentoFni || ''}"\n`;
             });
             let blob = new Blob([csv], { type: 'text/csv' });
             let link = document.createElement('a');
