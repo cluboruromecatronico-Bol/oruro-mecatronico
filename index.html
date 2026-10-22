@@ -429,8 +429,8 @@
                         <i class="fa-solid fa-check-circle mr-1"></i> ¡Registro exitoso! Credenciales generadas:
                     </div>
 
-                    <div id="printableCardAreaPuerta" class="space-y-4">
-                        <div class="text-slate-500 text-xs italic text-center p-6 border border-dashed border-slate-800 rounded-2xl">
+                    <div id="printableCardAreaPuerta" class="space-y-4 flex flex-col items-center">
+                        <div class="text-slate-500 text-xs italic text-center p-6 border border-dashed border-slate-800 rounded-2xl w-full">
                             Completa el registro rápido para generar e imprimir automáticamente las credenciales aquí.
                         </div>
                     </div>
@@ -483,7 +483,7 @@
                         <thead class="bg-slate-950 text-indigo-400 uppercase border-b border-slate-800">
                             <tr>
                                 <th class="p-2.5">Integrantes</th>
-                                <th class="p-2.5">C.I. / Teléfono</th>
+                                <th class="p-2.5">C.I. / Celular</th>
                                 <th class="p-2.5">Tutor / Asesor</th>
                                 <th class="p-2.5">Categoría / Subdivisión</th>
                                 <th class="p-2.5">Equipo</th>
@@ -518,7 +518,8 @@
                             <thead class="bg-slate-950 text-rose-400 uppercase border-b border-slate-800">
                                 <tr>
                                     <th class="p-2.5">Integrantes</th>
-                                    <th class="p-2.5">C.I. / Teléfono</th>
+                                    <th class="p-2.5">C.I.</th>
+                                    <th class="p-2.5">Celular</th>
                                     <th class="p-2.5">Tutor</th>
                                     <th class="p-2.5">Categoría / Sub</th>
                                     <th class="p-2.5">Equipo</th>
@@ -554,7 +555,7 @@
             </div>
         </section>
 
-        <!-- 8. CONTROL DE REFRIGERIO (PROTEGIDO CON CONTRASEÑA Y CONTROL POR DÍA) -->
+        <!-- 8. CONTROL DE REFRIGERIO -->
         <section id="sec-logistica" class="hidden space-y-6">
             <!-- Login Privado para Logística / Refrigerio -->
             <div class="max-w-xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-emerald-500/40 text-center" id="logisticaLoginBox">
@@ -584,7 +585,7 @@
                     <button onclick="validarRefrigerioManual()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 rounded-lg text-xs">Verificar C.I.</button>
                 </div>
                 
-                <div id="alertaRefrigerio" class="hidden p-4 rounded-xl font-bold text-center border"></div>
+                <div id="alertaRefrigerio" class="hidden p-4 rounded-xl font-bold text-center border text-sm space-y-1"></div>
             </div>
         </section>
 
@@ -718,15 +719,10 @@
             }
 
             const nombresStr = nombresArr.join(" / ");
-            
-            // Se agrupa el número de celular con el C.I. para no alterar las columnas de Sheets
-            let cisConCelular = [];
-            cisArr.forEach((ciVal, idx) => {
-                cisConCelular.push(`${ciVal} (Cel: ${celsArr[idx] || '-'})`);
-            });
-            const cisStr = cisConCelular.join(", ");
+            const cisStr = cisArr.join(", ");
+            const celsStr = celsArr.join(", ");
 
-            guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, false, fotoPagoBase64, fotoFniBase64);
+            guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, false, fotoPagoBase64, fotoFniBase64);
             
             btn.disabled = false;
             btn.innerText = "Enviar Inscripción Online";
@@ -780,13 +776,10 @@
             }
 
             const nombresStr = nombresArr.join(" / ");
-            let cisConCelular = [];
-            cisArr.forEach((ciVal, idx) => {
-                cisConCelular.push(`${ciVal} (Cel: ${celsArr[idx] || '-'})`);
-            });
-            const cisStr = cisConCelular.join(", ");
+            const cisStr = cisArr.join(", ");
+            const celsStr = celsArr.join(", ");
 
-            const itemGuardado = guardarParticipante(cisStr, nombresStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true, "", fotoFniBase64);
+            const itemGuardado = guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "Pagado en Puerta", "Inscripción Puerta", true, "", fotoFniBase64);
             
             // Generación e Impresión Directa de Credenciales
             generarTarjetasIndividuales(itemGuardado, 'printableCardAreaPuerta');
@@ -797,10 +790,9 @@
             btn.innerText = "Registrar y Generar Credenciales Automáticas";
         }
 
-        function guardarParticipante(ci, nombre, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta, fotoPagoBase64 = "", fotoFniBase64 = "") {
+        function guardarParticipante(ci, nombre, celular, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta, fotoPagoBase64 = "", fotoFniBase64 = "") {
             const registroPrevio = participantes.find(p => p.ci === ci);
             
-            // Estado de refrigerio independiente por Día 1 y Día 2
             const refDia1 = registroPrevio && registroPrevio.refrigerioDia1 ? registroPrevio.refrigerioDia1 : false;
             const refDia2 = registroPrevio && registroPrevio.refrigerioDia2 ? registroPrevio.refrigerioDia2 : false;
             
@@ -808,7 +800,7 @@
 
             const item = {
                 id: ci + "-" + categoria,
-                ci, nombre, tutor, categoria, subdivision, equipo,
+                ci, nombre, celular: celular || "", tutor, categoria, subdivision, equipo,
                 pago: pagoEstado,
                 tipo: tipoRegistro,
                 refrigerioDia1: refDia1,
@@ -826,7 +818,7 @@
             return item;
         }
 
-        // Genera credenciales individuales (1 por cada integrante)
+        // Genera credenciales individuales con QR garantizado
         function generarTarjetasIndividuales(item, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
@@ -849,20 +841,24 @@
                         <p class="text-[10px] text-slate-400">${item.subdivision}</p>
                         
                         <div class="bg-white p-2 rounded-xl inline-block my-2 border shadow-inner">
-                            <div id="${cardId}"></div>
+                            <div id="${cardId}" class="flex justify-center"></div>
                         </div>
                         
-                        <p class="text-[11px] text-slate-300 font-mono font-bold">${ciIndividual}</p>
+                        <p class="text-[11px] text-slate-300 font-mono font-bold">C.I.: ${ciIndividual}</p>
                         <p class="text-[9px] text-slate-500 mt-1">Tutor: ${item.tutor}</p>
                     </div>
                 `;
                 container.innerHTML += cardHTML;
 
                 setTimeout(() => {
-                    new QRCode(document.getElementById(cardId), {
-                        text: ciIndividual.split(' ')[0], width: 90, height: 90, correctLevel: QRCode.CorrectLevel.L
-                    });
-                }, 100);
+                    const qrContainer = document.getElementById(cardId);
+                    if (qrContainer) {
+                        qrContainer.innerHTML = ""; // Limpiar antes de crear
+                        new QRCode(qrContainer, {
+                            text: ciIndividual, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.L
+                        });
+                    }
+                }, 200);
             });
         }
 
@@ -948,7 +944,10 @@
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-950/50">
                             <td class="p-2.5 font-semibold text-white">${p.nombre || 'Sin Nombre'}</td>
-                            <td class="p-2.5 font-mono text-[11px]">${p.ci || '-'}</td>
+                            <td class="p-2.5 font-mono text-[11px]">
+                                <div>CI: ${p.ci || '-'}</div>
+                                <div class="text-emerald-400 font-sans"><i class="fa-brands fa-whatsapp mr-1"></i>${p.celular || 'Sin Celular'}</div>
+                            </td>
                             <td class="p-2.5 text-slate-300">${p.tutor || '-'}</td>
                             <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${p.categoria || '-'} (${p.subdivision || '-'})</span></td>
                             <td class="p-2.5 font-semibold text-amber-400">${p.equipo || '-'}</td>
@@ -987,6 +986,7 @@
                     <tr class="hover:bg-slate-950/50">
                         <td class="p-2.5 font-semibold text-white">${p.nombre || 'Sin Nombre'}</td>
                         <td class="p-2.5 font-mono text-[11px]">${p.ci || '-'}</td>
+                        <td class="p-2.5 font-sans text-emerald-400 font-semibold">${p.celular || '-'}</td>
                         <td class="p-2.5 text-slate-300">${p.tutor || '-'}</td>
                         <td class="p-2.5">${p.categoria || '-'} (${p.subdivision || '-'})</td>
                         <td class="p-2.5 font-semibold text-cyan-400">${p.equipo || '-'}</td>
@@ -1017,9 +1017,9 @@
         }
 
         function exportarCSV() {
-            let csv = "Nombres,CI_y_Celulares,Tutor,Categoria,Subdivision,Equipo,Pago/Comprobante,Tipo,DocumentoFNI\n";
+            let csv = "Nombres,CI,Celular,Tutor,Categoria,Subdivision,Equipo,Pago/Comprobante,Tipo,DocumentoFNI\n";
             participantes.forEach(p => {
-                csv += `"${p.nombre}","${p.ci}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}","${p.documentoFni || ''}"\n`;
+                csv += `"${p.nombre}","${p.ci}","${p.celular || ''}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}","${p.documentoFni || ''}"\n`;
             });
             let blob = new Blob([csv], { type: 'text/csv' });
             let link = document.createElement('a');
@@ -1040,47 +1040,55 @@
             }
         }
 
-        // Validación de Refrigerio por Día (14 o 15 de Noviembre)
+        // Validación de Refrigerio por Día con Alerta Visible en Pantalla
         function procesarValidacionRefrigerio(ciIngresado) {
             const box = document.getElementById('alertaRefrigerio');
             const diaSeleccionado = document.getElementById('selectDiaRefrigerio').value;
             const campoDia = (diaSeleccionado === 'dia1') ? 'refrigerioDia1' : 'refrigerioDia2';
-            const etiquetaDia = (diaSeleccionado === 'dia1') ? 'Día 1 (14 Nov)' : 'Día 2 (15 Nov)';
+            const etiquetaDia = (diaSeleccionado === 'dia1') ? 'Día 1 (14 Noviembre)' : 'Día 2 (15 Noviembre)';
 
-            box.classList.remove('hidden', 'bg-emerald-900/80', 'border-emerald-500', 'text-emerald-200', 'bg-rose-900/80', 'border-rose-500', 'text-rose-200');
+            box.classList.remove('hidden', 'bg-emerald-900/90', 'border-emerald-500', 'text-emerald-100', 'bg-rose-900/90', 'border-rose-500', 'text-rose-100');
             
-            const registrosPersona = participantes.filter(item => item.ci.includes(ciIngresado.trim()));
+            const ciLimpio = ciIngresado.trim();
+            const registrosPersona = participantes.filter(item => item.ci.includes(ciLimpio));
 
             if(registrosPersona.length === 0) {
-                box.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
-                box.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> C.I. ${ciIngresado} no registrado.`;
+                box.classList.add('bg-rose-900/90', 'border-rose-500', 'text-rose-100');
+                box.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl mb-1 block"></i> ❌ C.I. "${ciLimpio}" NO ENCONTRADO<br><span class="text-xs">El número de carnet no está registrado en la base de datos oficial.</span>`;
                 return;
             }
 
             if(registrosPersona.some(p => p[campoDia])) {
-                box.classList.add('bg-rose-900/80', 'border-rose-500', 'text-rose-200');
-                box.innerHTML = `<i class="fa-solid fa-circle-xmark text-2xl mb-1 block"></i> ⚠️ REFRIGERIO YA ENTREGADO (${etiquetaDia})<br><span class="text-xs">El competidor con C.I. ${ciIngresado} ya reclamó su refrigerio del ${etiquetaDia}.</span>`;
+                box.classList.add('bg-rose-900/90', 'border-rose-500', 'text-rose-100');
+                box.innerHTML = `<i class="fa-solid fa-circle-xmark text-2xl mb-1 block"></i> ⚠️ REFRIGERIO YA ENTREGADO ANTERIORMENTE<br><span class="text-xs">Participante: <strong>${registrosPersona[0].nombre}</strong><br>Ya reclamó su refrigerio correspondiente al <strong>${etiquetaDia}</strong>.</span>`;
             } else {
                 participantes.forEach(item => { 
-                    if(item.ci.includes(ciIngresado.trim())) {
+                    if(item.ci.includes(ciLimpio)) {
                         item[campoDia] = true;
                         enviarANubeSiExiste(item);
                     }
                 });
                 localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-                box.classList.add('bg-emerald-900/80', 'border-emerald-500', 'text-emerald-200');
-                box.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1 block"></i> ¡REFRIGERIO ENTREGADO EXITOSAMENTE!<br><span class="text-xs">Corresponde a: <strong>${registrosPersona[0].nombre}</strong> (${etiquetaDia})</span>`;
+                box.classList.add('bg-emerald-900/90', 'border-emerald-500', 'text-emerald-100');
+                box.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1 block"></i> ✅ ¡REFRIGERIO HABILITADO Y ENTREGADO!<br><span class="text-xs">Registrado con éxito para: <strong>${registrosPersona[0].nombre}</strong><br>Equipo: ${registrosPersona[0].equipo} | <strong>${etiquetaDia}</strong></span>`;
             }
         }
 
         function validarRefrigerioManual() {
             const ci = document.getElementById('inputManualCi').value;
-            if(ci) procesarValidacionRefrigerio(ci);
+            if(ci) {
+                procesarValidacionRefrigerio(ci);
+                document.getElementById('inputManualCi').value = ""; // Limpiar campo
+            } else {
+                alert("Por favor ingrese un número de C.I.");
+            }
         }
 
         function iniciarEscanerQR() {
             const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 200, height: 200 } }, false);
-            scanner.render((decodedText) => { procesarValidacionRefrigerio(decodedText); }, (error) => {});
+            scanner.render((decodedText) => { 
+                procesarValidacionRefrigerio(decodedText); 
+            }, (error) => {});
         }
 
         function initCanvasBackground() {
