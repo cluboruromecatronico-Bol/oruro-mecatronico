@@ -8,10 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- QR Code Generator -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- HTML5 QR Code Scanner -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <!-- jsPDF para exportar Credenciales en PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- HTML2Canvas para renderizar elementos a PDF -->
@@ -265,7 +261,7 @@
                     <i class="fa-solid fa-circle-check text-5xl text-emerald-400"></i>
                     <h3 class="text-2xl font-bold text-white">¡Inscripción Registrada con Éxito!</h3>
                     <p class="text-sm text-emerald-200 leading-relaxed">
-                        Los datos de tu equipo e imágenes adjuntas han sido recibidos correctamente en la base de datos.
+                        Los datos de tu equipo e imágenes adjuntas han sido recibidos correctamente en la base de datos de la nube.
                     </p>
                     <div class="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 text-xs text-slate-300">
                         <i class="fa-solid fa-shield-halved text-cyan-400 mr-1"></i> <strong>Aviso Importante:</strong> Tus credenciales oficiales serán verificadas y emitidas por los administradores una vez confirmado el comprobante de pago.
@@ -416,14 +412,14 @@
                         <input type="text" id="puertaProyecto" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                     </div>
 
-                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar y Generar Credenciales Automáticas</button>
+                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase">Registrar y Generar Credenciales</button>
                 </form>
             </div>
 
             <!-- Generación e Impresión Directa en Puerta -->
             <div class="md:col-span-6">
                 <div class="sticky top-24 space-y-4">
-                    <h3 class="text-lg font-bold text-amber-400"><i class="fa-solid fa-id-card mr-2"></i> Credenciales Directas (1 por Integrante)</h3>
+                    <h3 class="text-lg font-bold text-amber-400"><i class="fa-solid fa-id-card mr-2"></i> Credenciales Directas (por C.I.)</h3>
                     
                     <div id="msgPuertaExito" class="hidden p-3 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold">
                         <i class="fa-solid fa-check-circle mr-1"></i> ¡Registro exitoso! Credenciales generadas:
@@ -524,7 +520,7 @@
                                     <th class="p-2.5">Categoría / Sub</th>
                                     <th class="p-2.5">Equipo</th>
                                     <th class="p-2.5 text-center">Comprobantes</th>
-                                    <th class="p-2.5 text-center">Aprobación / Estado</th>
+                                    <th class="p-2.5 text-center">Estado Pago</th>
                                     <th class="p-2.5 text-center">Acción / Credenciales (PDF)</th>
                                 </tr>
                             </thead>
@@ -568,7 +564,7 @@
 
             <!-- Panel de Control de Refrigerio -->
             <div id="logisticaPanelContent" class="hidden max-w-xl mx-auto bg-slate-900/80 p-6 rounded-2xl border border-slate-800 text-center space-y-4">
-                <h2 class="text-2xl font-bold text-emerald-400"><i class="fa-solid fa-utensils mr-2"></i>Control de Refrigerios (2 Días)</h2>
+                <h2 class="text-2xl font-bold text-emerald-400"><i class="fa-solid fa-utensils mr-2"></i>Control de Refrigerios (Por C.I.)</h2>
                 
                 <!-- Selección del Día de Evento -->
                 <div class="p-3 bg-slate-950 rounded-xl border border-emerald-500/30 space-y-2 text-left">
@@ -578,11 +574,9 @@
                         <option value="dia2">Día 2: Domingo 15 de Noviembre de 2026</option>
                     </select>
                 </div>
-
-                <div id="reader" class="bg-slate-950 rounded-xl overflow-hidden border border-slate-800 mx-auto max-w-xs"></div>
                 
                 <div class="flex gap-2">
-                    <input type="text" id="inputManualCi" placeholder="Ingresar C.I. manualmente" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white">
+                    <input type="text" id="inputManualCi" placeholder="Ingrese o escanee el C.I. del integrante" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white">
                     <button onclick="validarRefrigerioManual()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 rounded-lg text-xs">Verificar C.I.</button>
                 </div>
                 
@@ -750,7 +744,7 @@
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
                 btn.disabled = false;
-                btn.innerText = "Registrar y Generar Credenciales Automáticas";
+                btn.innerText = "Registrar y Generar Credenciales";
                 return;
             }
 
@@ -785,7 +779,7 @@
             document.getElementById('btnPuertaAcciones').classList.remove('hidden');
 
             btn.disabled = false;
-            btn.innerText = "Registrar y Generar Credenciales Automáticas";
+            btn.innerText = "Registrar y Generar Credenciales";
         }
 
         function guardarParticipante(ci, nombre, celular, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, esPuerta, fotoPagoBase64 = "", fotoFniBase64 = "") {
@@ -816,7 +810,7 @@
             return item;
         }
 
-        // Generación de tarjetas individuales con carnet de identidad visible
+        // Generación de tarjetas individuales con carnet de identidad (Sin QR)
         function generarTarjetasIndividuales(item, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
@@ -826,37 +820,26 @@
 
             nombresArr.forEach((nom, idx) => {
                 const ciIndividual = cisArr[idx] ? cisArr[idx].trim() : item.ci;
-                const cardId = `qrCard_${containerId}_${idx}_${Date.now()}`;
                 
                 const cardHTML = `
-                    <div id="cardBox_${cardId}" class="bg-gradient-to-br from-slate-900 to-slate-950 p-4 rounded-2xl border-2 border-cyan-500/50 shadow-2xl text-center max-w-xs w-full relative">
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-950 p-5 rounded-2xl border-2 border-cyan-500/50 shadow-2xl text-center max-w-xs w-full relative space-y-2">
                         <span class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider block">Club Oruro Mecatrónico</span>
                         <span class="text-[9px] text-amber-400 font-semibold uppercase block">IV Encuentro Tecnológico 2026</span>
                         
-                        <h4 class="text-sm font-bold text-white mt-2">${nom.trim()}</h4>
-                        <p class="text-xs text-amber-300 font-semibold mt-1">Equipo: ${item.equipo}</p>
+                        <h4 class="text-sm font-bold text-white pt-2">${nom.trim()}</h4>
+                        <p class="text-xs text-amber-300 font-semibold">Equipo: ${item.equipo}</p>
                         <p class="text-[11px] text-cyan-400 font-medium">${item.categoria}</p>
                         <p class="text-[10px] text-slate-400">${item.subdivision}</p>
                         
-                        <div class="bg-white p-2 rounded-xl inline-block my-2 border shadow-inner">
-                            <div id="${cardId}" class="flex justify-center"></div>
+                        <div class="pt-3 pb-1">
+                            <span class="text-[10px] uppercase text-slate-400 block">Carnet de Identidad (C.I.):</span>
+                            <span class="text-sm text-white font-mono font-bold bg-slate-900 px-3 py-1 rounded border border-slate-700 inline-block">${ciIndividual}</span>
                         </div>
                         
-                        <p class="text-xs text-slate-200 font-mono font-bold bg-slate-900 py-1 rounded border border-slate-700 mt-1">C.I.: ${ciIndividual}</p>
-                        <p class="text-[9px] text-slate-400 mt-1">Tutor: ${item.tutor}</p>
+                        <p class="text-[9px] text-slate-500 pt-1">Tutor: ${item.tutor}</p>
                     </div>
                 `;
                 container.innerHTML += cardHTML;
-
-                setTimeout(() => {
-                    const qrContainer = document.getElementById(cardId);
-                    if (qrContainer) {
-                        qrContainer.innerHTML = "";
-                        new QRCode(qrContainer, {
-                            text: ciIndividual, width: 80, height: 80, correctLevel: QRCode.CorrectLevel.L
-                        });
-                    }
-                }, 200);
             });
         }
 
@@ -996,8 +979,8 @@
                             ${badgeEstado}
                             <button onclick="cambiarEstadoAprobacion(${index})" class="px-2 py-0.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[9px] block mx-auto mt-1">Cambiar Estado</button>
                         </td>
-                        <td class="p-2.5 text-center space-y-1">
-                            <button onclick="verCredencialPrivadaAdmin(${index})" class="px-2 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white rounded text-[10px] block w-full"><i class="fa-solid fa-file-pdf mr-1"></i> Ver Credenciales (PDF)</button>
+                        <td class="p-2.5 text-center">
+                            <button onclick="verCredencialPrivadaAdmin(${index})" class="px-2 py-1.5 bg-indigo-700 hover:bg-indigo-600 text-white rounded text-[10px] block w-full"><i class="fa-solid fa-file-pdf mr-1"></i> Credenciales (PDF)</button>
                         </td>
                     </tr>`;
             });
@@ -1011,7 +994,7 @@
         }
 
         function cambiarEstadoAprobacion(index) {
-            const opciones = prompt("Selecciona el estado:\n1. Aprobado / Pagado\n2. En Revisión\n3. Rechazado", "Pagado (Aprobado)");
+            const opciones = prompt("Selecciona el estado:\n1. Pagado (Aprobado)\n2. En Revisión\n3. Rechazado", "Pagado (Aprobado)");
             if (opciones !== null) {
                 participantes[index].pago = opciones;
                 localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
@@ -1037,13 +1020,12 @@
             if(pass === "logistica2026") {
                 document.getElementById('logisticaLoginBox').classList.add('hidden');
                 document.getElementById('logisticaPanelContent').classList.remove('hidden');
-                iniciarEscanerQR();
             } else {
                 alert("Contraseña de logística incorrecta.");
             }
         }
 
-        // Validación estricta y limpia de refrigerios por Carnet de Identidad y por Día
+        // Control de refrigerios independiente por carnet de identidad para cada integrante
         function procesarValidacionRefrigerio(ciIngresado) {
             const box = document.getElementById('alertaRefrigerio');
             const diaSeleccionado = document.getElementById('selectDiaRefrigerio').value;
@@ -1085,15 +1067,8 @@
                 procesarValidacionRefrigerio(ci);
                 document.getElementById('inputManualCi').value = "";
             } else {
-                alert("Por favor ingrese un número de C.I.");
+                alert("Por favor ingrese o escanee un número de C.I.");
             }
-        }
-
-        function iniciarEscanerQR() {
-            const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 200, height: 200 } }, false);
-            scanner.render((decodedText) => { 
-                procesarValidacionRefrigerio(decodedText); 
-            }, (error) => {});
         }
 
         function initCanvasBackground() {
