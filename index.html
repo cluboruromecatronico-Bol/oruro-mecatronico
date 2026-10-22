@@ -233,7 +233,7 @@
                 <div class="mb-4 p-3 bg-amber-950/40 rounded-xl border border-amber-500/40 text-xs text-amber-200 space-y-1">
                     <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> REQUISITO DE INTEGRANTES:</p>
                     <p>• Los equipos pueden tener <strong>hasta 3 integrantes</strong> para participar en <strong>todas las categorías</strong>.</p>
-                    <p>• Excepcionalmente, la categoría de <strong>Creatividad e Innovación Tecnológica</strong> est la única que acepta <strong>hasta 4 integrantes</strong>.</p>
+                    <p>• Excepcionalmente, la categoría de <strong>Creatividad e Innovación Tecnológica</strong> es la única que acepta <strong>hasta 4 integrantes</strong>.</p>
                 </div>
 
                 <div class="mb-6 p-4 bg-slate-950 rounded-xl border border-cyan-500/30 text-xs space-y-3">
@@ -347,7 +347,7 @@
             </div>
         </section>
 
-        <!-- 5. INSCRIPCIÓN EN PUERTA (Solo Admin) -->
+        <!-- 5. INSCRIPCIÓN EN PUERTA (Con soporte para fotos FNI) -->
         <section id="sec-puerta" class="hidden grid md:grid-cols-12 gap-8">
             <div class="md:col-span-7 bg-amber-950/20 p-6 rounded-2xl border border-amber-500/40">
                 <h2 class="text-2xl font-bold text-amber-400 mb-2"><i class="fa-solid fa-bolt mr-2"></i>Inscripción de Última Hora (En Puerta)</h2>
@@ -417,7 +417,7 @@
                     </div>
 
                     <div id="puertaFniContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
-                        <label class="block text-xs font-bold text-rose-300 uppercase">Adjuntar Comprobante / Matrícula FNI (Opcional en puerta) *</label>
+                        <label class="block text-xs font-bold text-rose-300 uppercase">Adjuntar Matrícula / Carnet FNI (Verificado en Puerta) *</label>
                         <input type="file" id="puertaFniDocumento" accept="image/*,.pdf" class="w-full bg-slate-950 border border-slate-700 rounded p-1 text-xs text-white">
                     </div>
 
@@ -564,7 +564,7 @@
         let qrCodePuertaObj = null;
         
         // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT TERMINADA EN /exec
-        const urlGoogleAppsScript = "https://script.google.com/macros/s/AKfycbyJmOKIT9OxWANb2L5MbqRhWqUnQmrNGpuJZCTZJ54-o9V8pAof-JFmWqiFd1VETiow/exec";
+        const urlGoogleAppsScript = "https://script.google.com/macros/s/AKfycbySgb1cGmI5CLOQ94B2CPjllhPQ89hG_fv8LVL2sOyxNqzOag8OQrMS5ANppVUbmBmWfw/exec";
 
         document.addEventListener("DOMContentLoaded", () => {
             qrCodeObj = new QRCode(document.getElementById("qrcodeCanvas"), {
