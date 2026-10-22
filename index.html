@@ -576,7 +576,7 @@
                 </div>
                 
                 <div class="flex gap-2">
-                    <input type="text" id="inputManualCi" placeholder="Ingrese el C.I. del participante" onkeydown="if(event.key === 'Enter') validarRefrigerioManual()" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white">
+                    <input type="text" id="inputManualCi" placeholder="Ingrese o escanee el C.I. del integrante" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white">
                     <button onclick="validarRefrigerioManual()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 rounded-lg text-xs">Verificar C.I.</button>
                 </div>
                 
@@ -810,7 +810,7 @@
             return item;
         }
 
-        // Generación de tarjetas individuales con carnet de identidad
+        // Generación de tarjetas individuales con carnet de identidad (Sin QR)
         function generarTarjetasIndividuales(item, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
@@ -1025,7 +1025,7 @@
             }
         }
 
-        // Validación de Refrigerio por C.I. corregida y optimizada
+        // Control de refrigerios independiente por carnet de identidad para cada integrante
         function procesarValidacionRefrigerio(ciIngresado) {
             const box = document.getElementById('alertaRefrigerio');
             const diaSeleccionado = document.getElementById('selectDiaRefrigerio').value;
@@ -1034,83 +1034,40 @@
 
             box.classList.remove('hidden', 'bg-emerald-900/90', 'border-emerald-500', 'text-emerald-100', 'bg-rose-900/90', 'border-rose-500', 'text-rose-100', 'bg-amber-900/90', 'border-amber-500', 'text-amber-100');
             
-            // Normalizar el C.I. buscado (quitar espacios y caracteres extra)
-            const ciBuscado = String(ciIngresado).trim().toLowerCase().replace(/\s+/g, '');
+            const ciLimpio = ciIngresado.trim();
+            const registrosPersona = participantes.filter(item => item.ci && item.ci.includes(ciLimpio));
 
-            if (!ciBuscado) {
-                alert("Por favor ingrese un número de C.I.");
-                return;
-            }
-
-            // Buscar si el C.I. coincide con alguno de los participantes
-            let participanteEncontrado = null;
-            let indiceParticipante = -1;
-
-            for (let i = 0; i < participantes.length; i++) {
-                const item = participantes[i];
-                if (!item.ci) continue;
-
-                // Separar si hay múltiples C.I. en un solo registro
-                const listaCis = String(item.ci).split(',').map(c => c.trim().toLowerCase().replace(/\s+/g, ''));
-                
-                if (listaCis.includes(ciBuscado)) {
-                    participanteEncontrado = item;
-                    indiceParticipante = i;
-                    break;
-                }
-            }
-
-            // 1. Si no existe en la base de datos
-            if (!participanteEncontrado) {
+            if(registrosPersona.length === 0) {
                 box.classList.add('bg-rose-900/90', 'border-rose-500', 'text-rose-100');
-                box.innerHTML = `
-                    <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 block"></i>
-                    <span class="text-base font-bold">❌ C.I. "${ciIngresado.trim()}" NO ENCONTRADO</span><br>
-                    <span class="text-xs font-normal">El número de carnet no figura en la lista de inscritos.</span>
-                `;
+                box.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-2xl mb-1 block"></i> ❌ C.I. "${ciLimpio}" NO ENCONTRADO<br><span class="text-xs">El número de carnet no está registrado en la base de datos oficial del evento.</span>`;
                 return;
             }
 
-            // 2. Si ya reclamó el refrigerio en ese día
-            if (participanteEncontrado[campoDia] === true) {
+            const participanteActual = registrosPersona[0];
+
+            if(participanteActual[campoDia]) {
                 box.classList.add('bg-amber-900/90', 'border-amber-500', 'text-amber-100');
-                box.innerHTML = `
-                    <i class="fa-solid fa-circle-xmark text-3xl mb-2 block text-amber-400"></i>
-                    <span class="text-base font-bold">⚠️ REFRIGERIO YA ENTREGADO</span><br>
-                    <span class="text-xs font-normal">
-                        Participante: <strong>${participanteEncontrado.nombre}</strong><br>
-                        Equipo: <strong>${participanteEncontrado.equipo}</strong><br>
-                        Ya registró su entrega para el <strong>${etiquetaDia}</strong>.
-                    </span>
-                `;
-                return;
+                box.innerHTML = `<i class="fa-solid fa-circle-xmark text-2xl mb-1 block"></i> ⚠️ REFRIGERIO YA ENTREGADO ANTERIORMENTE<br><span class="text-xs">Participante: <strong>${participanteActual.nombre}</strong><br>Equipo: ${participanteActual.equipo}<br>Ya reclamó su refrigerio correspondiente al <strong>${etiquetaDia}</strong>.</span>`;
+            } else {
+                participantes.forEach(item => { 
+                    if(item.ci && item.ci.includes(ciLimpio)) {
+                        item[campoDia] = true;
+                        enviarANubeSiExiste(item);
+                    }
+                });
+                localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
+                box.classList.add('bg-emerald-900/90', 'border-emerald-500', 'text-emerald-100');
+                box.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1 block"></i> ✅ ¡REFRIGERIO HABILITADO Y ENTREGADO!<br><span class="text-xs">Entregado con éxito a: <strong>${participanteActual.nombre}</strong><br>Equipo: ${participanteActual.equipo} | <strong>${etiquetaDia}</strong></span>`;
             }
-
-            // 3. Entrega exitosa: Marcar como entregado y guardar
-            participantes[indiceParticipante][campoDia] = true;
-            localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-            enviarANubeSiExiste(participantes[indiceParticipante]);
-
-            box.classList.add('bg-emerald-900/90', 'border-emerald-500', 'text-emerald-100');
-            box.innerHTML = `
-                <i class="fa-solid fa-circle-check text-3xl mb-2 block text-emerald-400"></i>
-                <span class="text-base font-bold">✅ ¡REFRIGERIO ENTREGADO CON ÉXITO!</span><br>
-                <span class="text-xs font-normal">
-                    Participante: <strong>${participanteEncontrado.nombre}</strong><br>
-                    Equipo: <strong>${participanteEncontrado.equipo}</strong> | Categoría: <strong>${participanteEncontrado.categoria}</strong><br>
-                    Registrado para el <strong>${etiquetaDia}</strong>.
-                </span>
-            `;
         }
 
         function validarRefrigerioManual() {
-            const input = document.getElementById('inputManualCi');
-            if (input && input.value) {
-                procesarValidacionRefrigerio(input.value);
-                input.value = ""; // Limpiar el cuadro de texto para la siguiente consulta
-                input.focus();
+            const ci = document.getElementById('inputManualCi').value;
+            if(ci) {
+                procesarValidacionRefrigerio(ci);
+                document.getElementById('inputManualCi').value = "";
             } else {
-                alert("Por favor ingrese un número de Carnet de Identidad.");
+                alert("Por favor ingrese o escanee un número de C.I.");
             }
         }
 
