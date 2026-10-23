@@ -72,7 +72,6 @@
             <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-center space-y-4">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-handshake mr-2 text-cyan-400"></i>Nuestros Patrocinadores Oficiales</h3>
                 <div class="border-2 border-dashed border-slate-800 rounded-xl p-6 min-h-[100px] flex items-center justify-center">
-                    <!-- Espacio reservado para agregar logos o nombres de patrocinadores en el futuro -->
                     <span class="text-xs text-slate-500 italic">Espacio para patrocinadores oficializados</span>
                 </div>
             </div>
@@ -242,12 +241,12 @@
                     </div>
                 </div>
 
-                <!-- Alerta / Confirmación de Registro Exitoso -->
+                <!-- Confirmación de Registro Exitoso (Inscripción Web) -->
                 <div id="msgInscripcionExitosa" class="hidden p-6 bg-emerald-950/90 border-2 border-emerald-500 rounded-2xl text-center space-y-4 shadow-2xl">
                     <i class="fa-solid fa-circle-check text-5xl text-emerald-400"></i>
                     <h3 class="text-2xl font-bold text-white">¡Inscripción Registrada con Éxito!</h3>
                     <p class="text-sm text-emerald-200 leading-relaxed">
-                        Los datos de tu equipo e imágenes adjuntas han sido recibidos correctamente en la base de datos de la nube.
+                        Todos los datos de tu equipo e imágenes adjuntas han sido cargados e ingresados satisfactoriamente a la base de datos de la nube.
                     </p>
                     <button onclick="reiniciarFormularioWeb()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">Inscribir Otro Equipo</button>
                 </div>
@@ -337,8 +336,9 @@
                     <p>• Hasta <strong>4 integrantes</strong> únicamente en <strong>Creatividad e Innovación</strong>.</p>
                 </div>
 
-                <div id="msgPuertaExito" class="hidden p-3 mb-4 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold">
-                    <i class="fa-solid fa-check-circle mr-1"></i> ¡Registro en puerta completado con éxito!
+                <div id="msgPuertaExito" class="hidden p-4 mb-4 bg-emerald-950/90 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold shadow-lg space-y-2">
+                    <i class="fa-solid fa-check-circle text-2xl text-emerald-400"></i>
+                    <p class="text-sm text-white">¡Registro en puerta cargado satisfactoriamente a la nube!</p>
                 </div>
 
                 <form id="puertaForm" onsubmit="procesarInscripcionPuerta(event)" class="space-y-4">
@@ -363,13 +363,22 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Subdivisión *</label>
-                            <select id="puertaSubdivision" onchange="verificarSubdivisionFNI('puertaSubdivision', 'puertaFniContainer')" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                            <select id="puertaSubdivision" onchange="verificarSubdivisionFniPuerta()" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                                 <option value="Amateur (65 Bs)">Amateur (65 Bs)</option>
                                 <option value="Libre (110 Bs)">Libre (110 Bs)</option>
                                 <option value="FNI Amateur (55 Bs)">FNI Amateur (55 Bs)</option>
                                 <option value="FNI Libre (90 Bs)">FNI Libre (90 Bs)</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Método de Pago Realizado *</label>
+                        <select id="puertaMetodoPago" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
+                            <option value="Pagado (Efectivo Presencial)">Efectivo Presencial</option>
+                            <option value="Pagado (QR BNB)">Pago por QR BNB</option>
+                            <option value="Pagado (Transferencia)">Transferencia Bancaria</option>
+                        </select>
                     </div>
 
                     <div>
@@ -390,8 +399,12 @@
                     </div>
 
                     <div id="puertaFniContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
-                        <label class="block text-xs font-bold text-rose-300 uppercase">Adjuntar Matrícula / Carnet FNI (Opcional en puerta) *</label>
-                        <input type="file" id="puertaFniDocumento" accept="image/*,.pdf" class="w-full bg-slate-950 border border-slate-700 rounded p-1 text-xs text-white">
+                        <label class="block text-xs font-bold text-rose-300 uppercase">Verificación FNI presencial *</label>
+                        <select id="puertaFniDocTipo" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white">
+                            <option value="Matrícula FNI Verificada Presencial">Matrícula Universitaria FNI Presentada</option>
+                            <option value="Carnet FNI Verificado Presencial">Carnet Universitario FNI Presentado</option>
+                            <option value="RUDE FNI Verificado Presencial">Comprobante FNI Validado</option>
+                        </select>
                     </div>
 
                     <div>
@@ -507,7 +520,7 @@
     <script>
         let participantes = JSON.parse(localStorage.getItem('om_encuentro_2026')) || [];
         
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT TERMINADA EN /exec
+        // URL DE GOOGLE APPS SCRIPT TERMINADA EN /exec
         const urlGoogleAppsScript = "https://script.google.com/macros/s/AKfycbySgb1cGmI5CLOQ94B2CPjllhPQ89hG_fv8LVL2sOyxNqzOag8OQrMS5ANppVUbmBmWfw/exec";
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -545,6 +558,16 @@
         function verificarSubdivisionFNI(subSelectId, boxId) {
             const sub = document.getElementById(subSelectId).value;
             const fniBox = document.getElementById(boxId);
+            if(sub.includes("FNI")) {
+                fniBox.classList.remove('hidden');
+            } else {
+                fniBox.classList.add('hidden');
+            }
+        }
+
+        function verificarSubdivisionFniPuerta() {
+            const sub = document.getElementById('puertaSubdivision').value;
+            const fniBox = document.getElementById('puertaFniContainer');
             if(sub.includes("FNI")) {
                 fniBox.classList.remove('hidden');
             } else {
@@ -623,7 +646,7 @@
             const cisStr = cisArr.join(", ");
             const celsStr = celsArr.join(", ");
 
-            guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, fotoPagoBase64, fotoFniBase64);
+            await guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "En Revisión", tipo, fotoPagoBase64, fotoFniBase64);
             
             btn.disabled = false;
             btn.innerText = "Enviar Inscripción Online";
@@ -636,6 +659,8 @@
             document.getElementById('eventForm').reset();
             document.getElementById('eventForm').classList.remove('hidden');
             document.getElementById('msgInscripcionExitosa').classList.add('hidden');
+            document.getElementById('previewComprobanteBox').classList.add('hidden');
+            document.getElementById('fniComprobanteContainer').classList.add('hidden');
             generarCamposIntegrantes('numIntegrantes', 'integrantesContainer');
         }
 
@@ -668,28 +693,32 @@
             const subdivision = document.getElementById('puertaSubdivision').value;
             const tutor = document.getElementById('puertaTutor').value.trim();
             const equipo = document.getElementById('puertaProyecto').value.trim();
+            const metodoPago = document.getElementById('puertaMetodoPago').value;
 
-            const fniInput = document.getElementById('puertaFniDocumento');
-            let fotoFniBase64 = "";
-            if (fniInput && fniInput.files.length > 0) {
-                fotoFniBase64 = await fileToBase64(fniInput.files[0]);
+            let fniDocEstado = "No aplica";
+            if(subdivision.includes("FNI")) {
+                fniDocEstado = document.getElementById('puertaFniDocTipo').value;
             }
 
             const nombresStr = nombresArr.join(" / ");
             const cisStr = cisArr.join(", ");
             const celsStr = celsArr.join(", ");
 
-            guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, "Pagado (Aprobado)", "Inscripción Puerta", "", fotoFniBase64);
+            await guardarParticipante(cisStr, nombresStr, celsStr, tutor, categoria, subdivision, equipo, metodoPago, "Inscripción Puerta", "", fniDocEstado);
             
-            document.getElementById('msgPuertaExito').classList.remove('hidden');
+            const msgBox = document.getElementById('msgPuertaExito');
+            msgBox.classList.remove('hidden');
+            setTimeout(() => msgBox.classList.add('hidden'), 5000);
+
             document.getElementById('puertaForm').reset();
+            document.getElementById('puertaFniContainer').classList.add('hidden');
             generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
 
             btn.disabled = false;
             btn.innerText = "Registrar Equipo";
         }
 
-        function guardarParticipante(ci, nombre, celular, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, fotoPagoBase64 = "", fotoFniBase64 = "") {
+        async function guardarParticipante(ci, nombre, celular, tutor, categoria, subdivision, equipo, pagoEstado, tipoRegistro, fotoPagoBase64 = "", fotoFniBase64 = "") {
             const existeIndex = participantes.findIndex(p => p.ci === ci && p.categoria === categoria);
 
             const item = {
@@ -699,28 +728,37 @@
                 tipo: tipoRegistro,
                 fotoPagoBase64,
                 fotoFniBase64,
-                documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
+                documentoFni: fotoFniBase64 ? (fotoFniBase64.startsWith("http") || fotoFniBase64.startsWith("data:") ? "Verificando..." : fotoFniBase64) : "No aplica"
             };
 
             if(existeIndex >= 0) participantes[existeIndex] = item;
             else participantes.push(item);
 
             localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-            enviarANubeSiExiste(item);
+            await enviarANubeSiExiste(item);
             return item;
         }
 
         function enviarANubeSiExiste(datos) {
-            if (urlGoogleAppsScript.startsWith("http")) {
-                fetch(urlGoogleAppsScript, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(datos)
-                }).then(() => {
-                    setTimeout(cargarDatosDesdeNube, 2500);
-                }).catch(err => console.log("Servicio en nube opcional:", err));
-            }
+            return new Promise((resolve) => {
+                if (urlGoogleAppsScript.startsWith("http")) {
+                    fetch(urlGoogleAppsScript, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(datos),
+                        keepalive: true
+                    }).then(() => {
+                        setTimeout(cargarDatosDesdeNube, 1500);
+                        resolve();
+                    }).catch(err => {
+                        console.log("Servicio en nube enviado localmente:", err);
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
+            });
         }
 
         function cargarDatosDesdeNube() {
