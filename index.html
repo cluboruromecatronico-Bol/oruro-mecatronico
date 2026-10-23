@@ -246,7 +246,7 @@
                     <i class="fa-solid fa-circle-check text-5xl text-emerald-400"></i>
                     <h3 class="text-2xl font-bold text-white">¡Inscripción Registrada y Guardada con Éxito!</h3>
                     <p class="text-sm text-emerald-200 leading-relaxed">
-                        Los datos de tu equipo, categoría, integrantes y comprobantes se han guardado correctamente en la <strong>Base de Datos Oficial (Google Sheets y Google Drive)</strong>. ¡Todo en orden!
+                        Los datos de tu equipo, categoría, integrantes y comprobantes se han enviado y guardado correctamente en la <strong>Base de Datos Oficial (Google Sheets y Google Drive)</strong>. ¡Todo en orden!
                     </p>
                     <button onclick="reiniciarFormularioWeb()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">Inscribir Otro Equipo</button>
                 </div>
@@ -638,7 +638,7 @@
                 documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
             };
 
-            // Envío estrictamente directo a la base de datos en nube (sin guardar en localStorage del cliente)
+            // Envío directo a Google Apps Script usando mode: "no-cors" para evitar bloqueos CORS
             enviarANubeDirecto(item, (exito) => {
                 btn.disabled = false;
                 btn.innerHTML = "Enviar y Guardar en la Base de Datos";
@@ -716,7 +716,6 @@
                 documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
             };
 
-            // Guardado en puerta con respaldo local en computadora y envío a base de datos
             guardarParticipanteLocalYCloud(item);
 
             document.getElementById('msgPuertaExito').classList.remove('hidden');
@@ -741,14 +740,13 @@
 
         function enviarANubeDirecto(datos, callback) {
             if (urlGoogleAppsScript.startsWith("http")) {
-                const payload = new URLSearchParams();
-                for (const key in datos) {
-                    payload.append(key, datos[key]);
-                }
-
                 fetch(urlGoogleAppsScript, {
                     method: "POST",
-                    body: payload
+                    mode: "no-cors", // Vital para prevenir bloqueos CORS con Google Apps Script[cite: 2]
+                    headers: {
+                        "Content-Type": "text/plain"
+                    },
+                    body: JSON.stringify(datos)
                 }).then(() => {
                     callback(true);
                     setTimeout(cargarDatosDesdeNube, 1500);
@@ -763,14 +761,13 @@
 
         function enviarANubeSiExiste(datos) {
             if (urlGoogleAppsScript.startsWith("http")) {
-                const payload = new URLSearchParams();
-                for (const key in datos) {
-                    payload.append(key, datos[key]);
-                }
-
                 fetch(urlGoogleAppsScript, {
                     method: "POST",
-                    body: payload
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "text/plain"
+                    },
+                    body: JSON.stringify(datos)
                 }).then(() => {
                     setTimeout(cargarDatosDesdeNube, 2000);
                 }).catch(err => console.log("Sincronización en segundo plano pendiente:", err));
