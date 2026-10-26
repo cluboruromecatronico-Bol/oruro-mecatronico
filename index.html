@@ -244,9 +244,9 @@
                 <!-- Alerta / Confirmación de Registro Exitoso -->
                 <div id="msgInscripcionExitosa" class="hidden p-6 bg-emerald-950/90 border-2 border-emerald-500 rounded-2xl text-center space-y-4 shadow-2xl">
                     <i class="fa-solid fa-circle-check text-5xl text-emerald-400"></i>
-                    <h3 class="text-2xl font-bold text-white">¡Inscripción Registrada y Guardada con Éxito!</h3>
+                    <h3 class="text-2xl font-bold text-white">¡Guardado con éxito! En revisión de los organizadores</h3>
                     <p class="text-sm text-emerald-200 leading-relaxed">
-                        Los datos de tu equipo, categoría, integrantes y comprobantes se han enviado y guardado correctamente en la <strong>Base de Datos Oficial (Google Sheets y Google Drive)</strong>. ¡Todo en orden!
+                        Los datos de tu equipo, categoría, integrantes y comprobantes se han guardado con éxito. En revisión de los organizadores. ¡Todo en orden!
                     </p>
                     <button onclick="reiniciarFormularioWeb()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">Inscribir Otro Equipo</button>
                 </div>
@@ -320,7 +320,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" id="btnRegSubmit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase transition shadow-lg">Enviar y Guardar en la Base de Datos</button>
+                    <button type="submit" id="btnRegSubmit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase transition shadow-lg">Guardar</button>
                 </form>
             </div>
         </section>
@@ -337,7 +337,7 @@
                 </div>
 
                 <div id="msgPuertaExito" class="hidden p-3 mb-4 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold">
-                    <i class="fa-solid fa-check-circle mr-1"></i> ¡Registro en puerta completado con éxito y guardado en la Base de Datos!
+                    <i class="fa-solid fa-check-circle mr-1"></i> ¡Guardado con éxito! En revisión de los organizadores.
                 </div>
 
                 <form id="puertaForm" onsubmit="procesarInscripcionPuerta(event)" class="space-y-4">
@@ -398,7 +398,7 @@
                         <input type="text" id="puertaProyecto" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
                     </div>
 
-                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase transition shadow-lg">Registrar y Guardar en Base de Datos</button>
+                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase transition shadow-lg">Guardar</button>
                 </form>
             </div>
         </section>
@@ -579,7 +579,7 @@
             e.preventDefault();
             const btn = document.getElementById('btnRegSubmit');
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Subiendo y guardando en la Nube...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`;
 
             const num = parseInt(document.getElementById('numIntegrantes').value);
             const categoria = document.getElementById('regCategoria').value;
@@ -587,7 +587,7 @@
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
                 btn.disabled = false;
-                btn.innerHTML = "Enviar y Guardar en la Base de Datos";
+                btn.innerHTML = "Guardar";
                 return;
             }
 
@@ -641,13 +641,13 @@
             // Envío directo a Google Apps Script usando mode: "no-cors" para evitar bloqueos CORS
             enviarANubeDirecto(item, (exito) => {
                 btn.disabled = false;
-                btn.innerHTML = "Enviar y Guardar en la Base de Datos";
+                btn.innerHTML = "Guardar";
 
                 if(exito) {
                     document.getElementById('eventForm').classList.add('hidden');
                     document.getElementById('msgInscripcionExitosa').classList.remove('hidden');
                 } else {
-                    alert("⚠️ Ocurrió un problema de red al sincronizar con la base de datos. Por favor, verifica tu conexión e inténtalo de nuevo.");
+                    alert("⚠️ Ocurrió un problema de red al sincronizar. Por favor, verifica tu conexión e inténtalo de nuevo.");
                 }
             });
         }
@@ -664,7 +664,7 @@
             e.preventDefault();
             const btn = document.getElementById('btnPuertaSubmit');
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Procesando y guardando...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`;
 
             const num = parseInt(document.getElementById('puertaNumIntegrantes').value);
             const categoria = document.getElementById('puertaCategoria').value;
@@ -672,7 +672,7 @@
             if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
                 alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
                 btn.disabled = false;
-                btn.innerHTML = "Registrar y Guardar en Base de Datos";
+                btn.innerHTML = "Guardar";
                 return;
             }
 
@@ -723,7 +723,7 @@
             generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
 
             btn.disabled = false;
-            btn.innerHTML = "Registrar y Guardar en Base de Datos";
+            btn.innerHTML = "Guardar";
             setTimeout(() => {
                 document.getElementById('msgPuertaExito').classList.add('hidden');
             }, 4000);
@@ -742,7 +742,7 @@
             if (urlGoogleAppsScript.startsWith("http")) {
                 fetch(urlGoogleAppsScript, {
                     method: "POST",
-                    mode: "no-cors", // Vital para prevenir bloqueos CORS con Google Apps Script[cite: 2]
+                    mode: "no-cors",
                     headers: {
                         "Content-Type": "text/plain"
                     },
