@@ -4,21 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Oruro Mecatrónico - IV Encuentro 2026</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cookie&family=Caveat:wght@500&family=Dancing+Script:wght@500&family=Great+Vibes&family=Satisfy&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+    <!-- QR: generar (credenciales) y leer (escáner de refrigerio) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 
     <style>
-        canvas#bgCanvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0;
+        canvas#bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 100; max-width: 92vw; }
+
+        /* ---------- Área de impresión ---------- */
+        #printArea { display: none; }
+        #printArea, #ovHost { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        @media print {
+            body > *:not(#printArea) { display: none !important; }
+            #printArea { display: block !important; }
+            html, body { background: #fff !important; margin: 0; padding: 0; }
         }
+
+        /* Credenciales: 54 x 86 mm, 9 por hoja carta */
+        .cr-sheet { width: 216mm; height: 279mm; display: grid; grid-template-columns: repeat(3, 54mm); grid-auto-rows: 86mm; justify-content: center; align-content: center; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
+        .cr-sheet:last-child { break-after: auto; page-break-after: auto; }
+        .cr-card { width: 54mm; height: 86mm; box-sizing: border-box; border: 0.25mm dashed #9ca3af; display: flex; flex-direction: column; align-items: center; text-align: center; font-family: Arial, Helvetica, sans-serif; color: #0f172a; overflow: hidden; background: #fff; }
+        .cr-top { width: 100%; height: 12mm; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; gap: 1.5mm; font-size: 5pt; font-weight: 700; line-height: 1.15; letter-spacing: .2pt; }
+        .cr-logo { width: 9mm; height: 9mm; object-fit: contain; background: #fff; border-radius: 1mm; }
+        .cr-rol { width: 100%; height: 6mm; line-height: 6mm; color: #fff; font-weight: 800; font-size: 8.5pt; letter-spacing: 1pt; }
+        .cr-name { height: 14mm; width: 50mm; display: flex; align-items: center; justify-content: center; font-weight: 800; line-height: 1.1; word-break: break-word; }
+        .cr-eq { font-size: 8pt; font-weight: 700; color: #0e7490; max-width: 50mm; line-height: 1.1; max-height: 5mm; overflow: hidden; }
+        .cr-cat { font-size: 6.5pt; color: #334155; max-width: 50mm; margin-top: .8mm; line-height: 1.15; min-height: 7mm; }
+        .cr-qr { width: 23mm; height: 23mm; }
+        .cr-qr svg { width: 100%; height: 100%; display: block; }
+        .cr-cod { font-family: 'Courier New', monospace; font-weight: 700; font-size: 8pt; margin-top: .6mm; }
+        .cr-ref { margin-top: auto; margin-bottom: 1.2mm; font-size: 5pt; color: #475569; }
+
+        /* Certificados: carta horizontal, solo se imprime el texto variable */
+        .ct-sheet { position: relative; width: 11in; height: 8.49in; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
+        .ct-sheet:last-child { break-after: auto; page-break-after: auto; }
+        .ct-name, .ct-line { position: absolute; left: 50%; transform: translate(calc(-50% + var(--dx, 0mm)), calc(-50% + var(--dy, 0mm))); white-space: nowrap; text-align: center; line-height: 1.05; }
+        .ct-line { font-family: 'Roboto Slab', serif; font-weight: 700; color: #b71c1c; }
+        .ct-bg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .35; pointer-events: none; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col relative overflow-x-hidden">
 
     <canvas id="bgCanvas"></canvas>
+    <div id="toast" class="hidden px-4 py-3 rounded-xl text-sm font-semibold shadow-2xl"></div>
 
     <!-- Navegación Principal -->
     <nav class="bg-slate-900/90 backdrop-blur-md border-b border-cyan-500/30 sticky top-0 z-50">
@@ -27,13 +60,13 @@
                 <img src="logo.jpg" alt="Logo Club Oruro Mecatrónico" class="h-10 w-10 rounded-lg bg-white object-contain">
                 <span class="font-bold text-lg tracking-wider text-white">CLUB ORURO <span class="text-cyan-400">MECATRÓNICO</span></span>
             </div>
-            
             <div class="flex flex-wrap gap-2 text-xs md:text-sm">
                 <button onclick="switchTab('inicio')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold transition"><i class="fa-solid fa-house mr-1"></i> Inicio</button>
                 <button onclick="switchTab('institucional')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"><i class="fa-solid fa-users mr-1"></i> Quiénes Somos</button>
                 <button onclick="switchTab('convocatoria')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"><i class="fa-solid fa-file-lines mr-1"></i> Convocatoria</button>
                 <button onclick="switchTab('registro')" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition"><i class="fa-solid fa-pen-to-square mr-1"></i> Inscripción Web</button>
                 <button id="navBtnPuerta" onclick="switchTab('puerta')" class="hidden px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition"><i class="fa-solid fa-bolt mr-1"></i> Registro Rápido (Puerta)</button>
+                <button onclick="switchTab('refri')" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white transition"><i class="fa-solid fa-utensils mr-1"></i> Refrigerio</button>
                 <button onclick="switchTab('jurados')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition"><i class="fa-solid fa-user-ninja mr-1"></i> Jurados</button>
                 <button onclick="switchTab('admin')" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition"><i class="fa-solid fa-lock mr-1"></i> Admin</button>
             </div>
@@ -50,16 +83,16 @@
                     IV Encuentro Tecnológico <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Mecatrónico 2026</span>
                 </h1>
                 <p class="text-amber-400 font-semibold text-lg"><i class="fa-solid fa-calendar-days mr-2"></i> 14 y 15 de Noviembre de 2026</p>
-                
+
                 <div class="max-w-md mx-auto bg-slate-950 p-3 rounded-2xl border-2 border-cyan-500/40 shadow-2xl">
                     <img src="flyer.png" alt="Flyer Oficial IV Encuentro Tecnológico Mecatrónico 2026" class="w-full h-auto rounded-xl object-cover shadow-inner" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=600&q=80';">
                     <p class="text-[10px] text-slate-500 mt-2">Flyer Oficial del Evento</p>
                 </div>
 
                 <div class="flex justify-center gap-6 text-2xl text-cyan-400 pt-2">
-                    <a href="https://www.facebook.com/share/1D6ig4wCpq/" target="_blank" class="hover:text-cyan-300 transition" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
-                    <a href="https://www.tiktok.com/@club.oruro.mecatr?_r=1&_t=ZS-9AlYwjAHgl5" target="_blank" class="hover:text-cyan-300 transition" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition" title="Grupo de WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="https://www.facebook.com/share/1D6ig4wCpq/" target="_blank" rel="noopener" class="hover:text-cyan-300 transition" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.tiktok.com/@club.oruro.mecatr?_r=1&_t=ZS-9AlYwjAHgl5" target="_blank" rel="noopener" class="hover:text-cyan-300 transition" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" rel="noopener" class="text-emerald-400 hover:text-emerald-300 transition" title="Grupo de WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
                 </div>
 
                 <div class="flex justify-center gap-4 pt-2">
@@ -68,19 +101,18 @@
                 </div>
             </div>
 
-            <!-- ESPACIO RESERVADO PARA PATROCINADORES -->
+            <!-- GANADORES PUBLICADOS POR LOS JURADOS -->
+            <div id="ganadoresPublico" class="hidden bg-slate-900/60 p-6 rounded-2xl border border-amber-500/30 space-y-4">
+                <h3 class="text-xl font-extrabold text-amber-400 text-center"><i class="fa-solid fa-trophy mr-2"></i>Ganadores del Encuentro</h3>
+                <div id="ganadoresPublicoLista" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
             <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-center space-y-4">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-handshake mr-2 text-cyan-400"></i>Nuestros Patrocinadores Oficiales</h3>
                 <div class="flex flex-wrap items-center justify-center gap-6 py-2">
-                    <div class="bg-white/95 rounded-xl p-3 w-36 h-24 flex items-center justify-center shadow-lg">
-                        <img src="patrocinador1.png" alt="Patrocinador 1" class="max-w-full max-h-full object-contain">
-                    </div>
-                    <div class="bg-white/95 rounded-xl p-3 w-36 h-24 flex items-center justify-center shadow-lg">
-                        <img src="patrocinador2.png" alt="Patrocinador 2" class="max-w-full max-h-full object-contain">
-                    </div>
-                    <div class="bg-white/95 rounded-xl p-3 w-36 h-24 flex items-center justify-center shadow-lg">
-                        <img src="patrocinador3.png" alt="Patrocinador 3" class="max-w-full max-h-full object-contain">
-                    </div>
+                    <div class="bg-white/95 rounded-xl p-3 w-36 h-24 flex items-center justify-center shadow-lg"><img src="patrocinador1.png" alt="Patrocinador 1" class="max-w-full max-h-full object-contain"></div>
+                    <div class="bg-white/95 rounded-xl p-3 w-36 h-24 flex items-center justify-center shadow-lg"><img src="patrocinador2.png" alt="Patrocinador 2" class="max-w-full max-h-full object-contain"></div>
+                    <div class="bg-white/95 rounded-xl p-3 w-36 h-24 flex items-center justify-center shadow-lg"><img src="patrocinador3.png" alt="Patrocinador 3" class="max-w-full max-h-full object-contain"></div>
                 </div>
             </div>
         </section>
@@ -103,12 +135,11 @@
                         <h2 class="text-2xl font-bold text-cyan-400"><i class="fa-solid fa-file-lines mr-2"></i> Convocatoria y Reglamentos 2026</h2>
                         <p class="text-slate-300 text-sm mt-1">Consulta la convocatoria oficial de la FNI - UTO y accede a los 17 reglamentos específicos por categoría.</p>
                     </div>
-                    <a href="IV CONVOCATORIA GENERAL 2026.pdf" target="_blank" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg transition flex items-center gap-2">
+                    <a href="IV CONVOCATORIA GENERAL 2026.pdf" target="_blank" rel="noopener" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg transition flex items-center gap-2">
                         <i class="fa-solid fa-download"></i> Descargar PDF Convocatoria
                     </a>
                 </div>
 
-                <!-- Recuadro para Unirse al Grupo de WhatsApp -->
                 <div class="p-5 bg-gradient-to-r from-emerald-950/80 to-slate-900 rounded-2xl border border-emerald-500/50 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div class="space-y-2 text-center md:text-left">
                         <h3 class="text-lg font-bold text-emerald-400 flex items-center justify-center md:justify-start gap-2">
@@ -117,7 +148,7 @@
                         <p class="text-slate-300 text-xs max-w-md">
                             Únete al grupo de competidores para recibir comunicados oficiales, resolver dudas técnicas directamente con el comité organizador y coordinar tu participación.
                         </p>
-                        <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition shadow-lg shadow-emerald-600/20 mt-2">
+                        <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition shadow-lg shadow-emerald-600/20 mt-2">
                             <i class="fa-brands fa-whatsapp"></i> Unirme al Grupo de WhatsApp
                         </a>
                     </div>
@@ -127,83 +158,12 @@
                     </div>
                 </div>
 
-                <!-- REGLAMENTOS TÉCNICOS OFICIALES -->
                 <div class="p-5 bg-slate-950 rounded-2xl border border-cyan-500/30 space-y-4">
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-book-bookmark text-cyan-400"></i> Reglamentos Técnicos Oficiales (17 Subcategorías)
                     </h3>
                     <p class="text-slate-400 text-xs">Haz clic en cada opción para visualizar el reglamento o la base técnica correspondiente:</p>
-                    
-                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                        <a href="MINISUMO_AUTÓNOMO_AMATEUR_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-robot text-cyan-400 mr-2"></i> 1. Minisumo Autónomo (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="MINISUMO_AUTÓNOMO_LIBRE_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-robot text-cyan-400 mr-2"></i> 2. Minisumo Autónomo (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="MINISUMO_RC_AMATEUR_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-gamepad text-cyan-400 mr-2"></i> 3. Minisumo RC (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="MINISUMO_RC_LIBRE_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-gamepad text-cyan-400 mr-2"></i> 4. Minisumo RC (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="LEGOSUMO_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-cubes text-cyan-400 mr-2"></i> 5. Legosumo (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="MICROSUMO_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-microchip text-cyan-400 mr-2"></i> 6. Microsumo (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="SEGUIDOR_DE_LÍNEA_VELOCISTA_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-bolt text-cyan-400 mr-2"></i> 7. Seguidor Velocista (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="SEGUIDOR_DE_LINEA_DESTREZA_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-route text-cyan-400 mr-2"></i> 8. Seguidor Destreza (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="Seguidor_de_lineas_KIT_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-boxes-packing text-cyan-400 mr-2"></i> 9. Seguidor Kits (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="ROBOFUT_AMATEUR_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-futbol text-cyan-400 mr-2"></i> 10. Robofut (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="ROBOFUT_LIBRE_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-futbol text-cyan-400 mr-2"></i> 11. Robofut (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="LABERINTO_AMATEUR_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-dungeon text-cyan-400 mr-2"></i> 12. Laberinto (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="LABERINTO_LIBRE_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-dungeon text-cyan-400 mr-2"></i> 13. Laberinto (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="CARRERA_INSECTOS_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-bug text-cyan-400 mr-2"></i> 14. Carrera de Insectos (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="OTTO_ROBOTDANCE_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-music text-cyan-400 mr-2"></i> 15. Otto Robotdance (Amateur)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="CREATIVIDAD_E_INNOVACIÓN_TECNOLÓGICA_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-lightbulb text-cyan-400 mr-2"></i> 16. Creatividad e Innovación (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                        <a href="MINI_WARBOT_3lb_IV_2026.pdf" target="_blank" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
-                            <span><i class="fa-solid fa-shield-cat text-cyan-400 mr-2"></i> 17. Mini Warbot 3 Libras (Libre)</span>
-                            <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
-                        </a>
-                    </div>
+                    <div id="listaReglamentos" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
                 </div>
 
                 <div class="p-4 bg-slate-950 rounded-xl border border-slate-800">
@@ -221,7 +181,7 @@
         <section id="sec-registro" class="hidden max-w-3xl mx-auto space-y-6">
             <div class="bg-slate-900/80 p-6 md:p-8 rounded-2xl border border-slate-800">
                 <h2 class="text-2xl font-bold text-cyan-400 mb-2"><i class="fa-solid fa-ticket mr-2"></i>Inscripción Online</h2>
-                
+
                 <div class="mb-4 p-3 bg-amber-950/40 rounded-xl border border-amber-500/40 text-xs text-amber-200 space-y-1">
                     <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> REQUISITO DE INTEGRANTES:</p>
                     <p>• Los equipos pueden tener <strong>hasta 3 integrantes</strong> para participar en <strong>todas las categorías</strong>.</p>
@@ -249,690 +209,1042 @@
                     </div>
                 </div>
 
-                <!-- Alerta / Confirmación de Registro Exitoso -->
                 <div id="msgInscripcionExitosa" class="hidden p-6 bg-emerald-950/90 border-2 border-emerald-500 rounded-2xl text-center space-y-4 shadow-2xl">
                     <i class="fa-solid fa-circle-check text-5xl text-emerald-400"></i>
                     <h3 class="text-2xl font-bold text-white">¡Guardado con éxito! En revisión de los organizadores</h3>
                     <p class="text-sm text-emerald-200 leading-relaxed">
-                        Los datos de tu equipo, categoría, integrantes y comprobantes se han guardado con éxito. En revisión de los organizadores. ¡Todo en orden!
+                        Los datos de tu equipo, categoría, integrantes y comprobante se guardaron. Cuando el pago sea aprobado, tu credencial estará lista para el evento.
                     </p>
+                    <p class="text-sm text-emerald-100">Código de tu equipo: <strong id="wCodigoOk" class="font-mono text-lg"></strong><br><span class="text-xs">Guárdalo por si necesitas consultar con los organizadores.</span></p>
                     <button onclick="reiniciarFormularioWeb()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase transition shadow-lg">Inscribir Otro Equipo</button>
                 </div>
 
-                <form id="eventForm" onsubmit="procesarInscripcion(event, 'Online')" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Categoría Oficial *</label>
-                            <select id="regCategoria" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                                <option value="Minisumo Autónomo">Minisumo Autónomo</option>
-                                <option value="Minisumo RC">Minisumo RC</option>
-                                <option value="Legosumo">Legosumo</option>
-                                <option value="Microsumo">Microsumo</option>
-                                <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
-                                <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
-                                <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
-                                <option value="Robofut">Robofut</option>
-                                <option value="Laberinto">Laberinto</option>
-                                <option value="Carrera de Insectos">Carrera de Insectos</option>
-                                <option value="Otto Robotdance">Otto Robotdance</option>
-                                <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica (Única de 4)</option>
-                                <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Subdivisión *</label>
-                            <select id="regSubdivision" onchange="verificarSubdivisionFNI('regSubdivision', 'fniComprobanteContainer')" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                                <option value="Amateur (65 Bs)">Amateur (65 Bs)</option>
-                                <option value="Libre (110 Bs)">Libre (110 Bs)</option>
-                                <option value="FNI Amateur (55 Bs)">FNI Amateur (55 Bs)</option>
-                                <option value="FNI Libre (90 Bs)">FNI Libre (90 Bs)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Número de Integrantes (1 a 4) *</label>
-                        <select id="numIntegrantes" onchange="generarCamposIntegrantes('numIntegrantes', 'integrantesContainer')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                            <option value="1">1 Integrante</option>
-                            <option value="2">2 Integrantes</option>
-                            <option value="3">3 Integrantes</option>
-                            <option value="4">4 Integrantes (Solo para Innovación)</option>
-                        </select>
-                    </div>
-
-                    <div id="integrantesContainer" class="space-y-3 border-t border-slate-800 pt-3"></div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre Completo del Tutor / Asesor *</label>
-                        <input type="text" id="regTutor" required placeholder="Ej. Ing. Carlos Mendoza (Obligatorio para menores de edad)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                    </div>
-
-                    <div id="fniComprobanteContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
-                        <label class="block text-xs font-bold text-rose-300 uppercase">Adjuntar Matrícula / Carnet Universitario FNI (Obligatorio para descuento) *</label>
-                        <input type="file" id="fniDocumento" accept="image/*,.pdf" class="w-full bg-slate-950 border border-slate-700 rounded p-1 text-xs text-white">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre del Equipo *</label>
-                        <input type="text" id="regEquipo" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                    </div>
-
-                    <div class="p-3 bg-slate-950 rounded-xl border border-cyan-500/30 space-y-2">
-                        <label class="block text-xs font-bold text-cyan-400 uppercase">
-                            <i class="fa-solid fa-image mr-1"></i> Foto del Comprobante de Pago (QR o Recibo de Transferencia) *
-                        </label>
-                        <input type="file" id="regFotoComprobante" accept="image/*,.pdf" required onchange="previsualizarComprobante(event)" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-xs text-white">
-                        <div id="previewComprobanteBox" class="hidden mt-2 text-center">
-                            <p class="text-[10px] text-slate-400 mb-1">Vista Previa del Comprobante:</p>
-                            <img id="imgPreviewComprobante" src="" class="max-h-36 mx-auto rounded border border-slate-700 object-contain">
-                        </div>
-                    </div>
-
-                    <button type="submit" id="btnRegSubmit" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-sm uppercase transition shadow-lg">Guardar</button>
-                </form>
+                <form id="formWeb" onsubmit="enviarInscripcion(event,'w')" class="space-y-4"></form>
             </div>
         </section>
 
-        <!-- 5. REGISTRO RÁPIDO EN PUERTA -->
+        <!-- 5. REGISTRO RÁPIDO EN PUERTA (solo administrador) -->
         <section id="sec-puerta" class="hidden max-w-xl mx-auto space-y-6">
             <div class="bg-amber-950/20 p-6 rounded-2xl border border-amber-500/40">
                 <h2 class="text-2xl font-bold text-amber-400 mb-2"><i class="fa-solid fa-bolt mr-2"></i>Registro Rápido (En Puerta)</h2>
-                
-                <div class="mb-4 p-3 bg-amber-950/40 rounded-xl border border-amber-500/40 text-xs text-amber-200 space-y-1">
-                    <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> REQUISITO DE INTEGRANTES:</p>
-                    <p>• Hasta <strong>3 integrantes</strong> para categorías generales.</p>
-                    <p>• Hasta <strong>4 integrantes</strong> únicamente en <strong>Creatividad e Innovación</strong>.</p>
-                </div>
-
-                <div id="msgPuertaExito" class="hidden p-3 mb-4 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold">
-                    <i class="fa-solid fa-check-circle mr-1"></i> ¡Guardado con éxito! En revisión de los organizadores.
-                </div>
-
-                <form id="puertaForm" onsubmit="procesarInscripcionPuerta(event)" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Categoría Oficial *</label>
-                            <select id="puertaCategoria" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                                <option value="Minisumo Autónomo">Minisumo Autónomo</option>
-                                <option value="Minisumo RC">Minisumo RC</option>
-                                <option value="Legosumo">Legosumo</option>
-                                <option value="Microsumo">Microsumo</option>
-                                <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
-                                <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
-                                <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
-                                <option value="Robofut">Robofut</option>
-                                <option value="Laberinto">Laberinto</option>
-                                <option value="Carrera de Insectos">Carrera de Insectos</option>
-                                <option value="Otto Robotdance">Otto Robotdance</option>
-                                <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica (Única de 4)</option>
-                                <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Subdivisión *</label>
-                            <select id="puertaSubdivision" onchange="verificarSubdivisionFNI('puertaSubdivision', 'puertaFniContainer')" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                                <option value="Amateur (65 Bs)">Amateur (65 Bs)</option>
-                                <option value="Libre (110 Bs)">Libre (110 Bs)</option>
-                                <option value="FNI Amateur (55 Bs)">FNI Amateur (55 Bs)</option>
-                                <option value="FNI Libre (90 Bs)">FNI Libre (90 Bs)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Número de Integrantes (1 a 4) *</label>
-                        <select id="puertaNumIntegrantes" onchange="generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer')" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                            <option value="1">1 Integrante</option>
-                            <option value="2">2 Integrantes</option>
-                            <option value="3">3 Integrantes</option>
-                            <option value="4">4 Integrantes (Solo para Innovación)</option>
-                        </select>
-                    </div>
-
-                    <div id="puertaIntegrantesContainer" class="space-y-3 border-t border-slate-800 pt-3"></div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre Completo del Tutor / Asesor *</label>
-                        <input type="text" id="puertaTutor" required placeholder="Ej. Ing. Carlos Mendoza" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                    </div>
-
-                    <div id="puertaFniContainer" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
-                        <label class="block text-xs font-bold text-rose-300 uppercase">Adjuntar Matrícula / Carnet FNI (Opcional en puerta) *</label>
-                        <input type="file" id="puertaFniDocumento" accept="image/*,.pdf" class="w-full bg-slate-950 border border-slate-700 rounded p-1 text-xs text-white">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre del Equipo *</label>
-                        <input type="text" id="puertaProyecto" required placeholder="Ej. Team Alpha" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs">
-                    </div>
-
-                    <button type="submit" id="btnPuertaSubmit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm uppercase transition shadow-lg">Guardar</button>
-                </form>
+                <p class="text-xs text-amber-200 mb-4">Se aprueba al instante (cobrar en efectivo el monto indicado) y se imprimen las credenciales de todos los integrantes.</p>
+                <div id="msgPuertaExito" class="hidden p-3 mb-4 bg-emerald-950/80 border border-emerald-500 rounded-xl text-center text-xs text-emerald-200 font-bold"></div>
+                <form id="formPuerta" onsubmit="enviarInscripcion(event,'p')" class="space-y-4"></form>
             </div>
         </section>
 
-        <!-- 6. PANEL DE JURADOS -->
+        <!-- 6. CONTROL DE REFRIGERIO -->
+        <section id="sec-refri" class="hidden space-y-6">
+            <div class="max-w-xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-emerald-500/40 text-center" id="refriLoginBox">
+                <h2 class="text-xl font-bold text-emerald-400 mb-2"><i class="fa-solid fa-utensils mr-2"></i>Control de Refrigerio (Logística)</h2>
+                <input type="password" id="passLog" placeholder="Contraseña de Logística" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs mb-3 text-center" onkeydown="if(event.key==='Enter')login('logistica')">
+                <button onclick="login('logistica')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs">Ingresar</button>
+            </div>
+
+            <div id="refriPanelContent" class="hidden max-w-2xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <h2 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-qrcode mr-2"></i>Escanear credencial</h2>
+                    <div class="flex items-center gap-2">
+                        <select id="refDia" onchange="cargarResumenRefri()" class="bg-slate-950 border border-emerald-500/40 rounded p-2 text-xs text-white">
+                            <option>Sábado 14</option><option>Domingo 15</option>
+                        </select>
+                        <button onclick="cerrarSesion('logistica')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px]">Cerrar sesión</button>
+                    </div>
+                </div>
+                <p class="text-center text-sm text-slate-300">Entregados: <strong id="refEntregados" class="text-emerald-400 text-lg">0</strong> de <strong id="refTotal">0</strong></p>
+
+                <div class="flex gap-2">
+                    <input type="text" id="refCodigo" placeholder="Escanea el QR o escribe el número (ej. 42-1)" autocomplete="off" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-sm font-mono" onkeydown="if(event.key==='Enter'){registrarRefrigerio(this.value);}">
+                    <button onclick="registrarRefrigerio($('refCodigo').value)" class="px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm">Registrar</button>
+                </div>
+                <button id="btnCam" onclick="toggleCamara()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-xs font-bold"><i class="fa-solid fa-camera mr-1"></i> Escanear con la cámara</button>
+                <div id="camBox" class="hidden"><video id="camVideo" playsinline muted class="w-full rounded-xl bg-black max-h-72 object-cover"></video><canvas id="camCanvas" class="hidden"></canvas></div>
+
+                <div id="refResultado" class="hidden p-5 rounded-2xl text-center space-y-1"></div>
+
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Últimos registros</p>
+                    <ul id="refLog" class="text-xs text-slate-300 space-y-1"></ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. PANEL DE JURADOS -->
         <section id="sec-jurados" class="hidden space-y-6">
             <div class="max-w-xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-indigo-500/40 text-center" id="juradoLoginBox">
                 <h2 class="text-xl font-bold text-indigo-400 mb-2"><i class="fa-solid fa-user-ninja mr-2"></i>Acceso exclusivo para Jurados</h2>
-                <input type="password" id="passJurado" placeholder="Contraseña de Jurado" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs mb-3 text-center">
-                <button onclick="verificarLoginJurado()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs">Ingresar al Panel</button>
+                <input type="password" id="passJurado" placeholder="Contraseña de Jurado" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs mb-3 text-center" onkeydown="if(event.key==='Enter')login('jurado')">
+                <button onclick="login('jurado')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs">Ingresar al Panel</button>
             </div>
 
-            <div id="juradoPanelContent" class="hidden bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <h2 class="text-xl font-bold text-indigo-400"><i class="fa-solid fa-clipboard-list mr-2"></i>Panel de Control - Jurados</h2>
-                    <div class="flex gap-2">
-                        <button onclick="cargarDatosDesdeNube()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold"><i class="fa-solid fa-rotate mr-1"></i> Actualizar Lista</button>
-                        <select id="filtroJurado" onchange="renderTablaJurados()" class="bg-slate-950 border border-indigo-500/40 rounded p-2 text-xs text-white">
-                            <option value="TODAS">Todas las Categorías Oficiales (13)</option>
-                            <option value="Minisumo Autónomo">Minisumo Autónomo</option>
-                            <option value="Minisumo RC">Minisumo RC</option>
-                            <option value="Legosumo">Legosumo</option>
-                            <option value="Microsumo">Microsumo</option>
-                            <option value="Seguidor de Línea Velocista">Seguidor de Línea Velocista</option>
-                            <option value="Seguidor de Línea Destreza">Seguidor de Línea Destreza</option>
-                            <option value="Seguidor de Línea Kits">Seguidor de Línea Kits</option>
-                            <option value="Robofut">Robofut</option>
-                            <option value="Laberinto">Laberinto</option>
-                            <option value="Carrera de Insectos">Carrera de Insectos</option>
-                            <option value="Otto Robotdance">Otto Robotdance</option>
-                            <option value="Creatividad e Innovación Tecnológica">Creatividad e Innovación Tecnológica</option>
-                            <option value="Mini Warbot 3 Libras">Mini Warbot de 3 Libras</option>
-                        </select>
+            <div id="juradoPanelContent" class="hidden space-y-6">
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <h2 class="text-xl font-bold text-indigo-400"><i class="fa-solid fa-clipboard-list mr-2"></i>Panel de Control - Jurados</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="cargarDatos(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold"><i class="fa-solid fa-rotate mr-1"></i> Actualizar Lista</button>
+                            <select id="filtroJurado" onchange="renderJurados()" class="bg-slate-950 border border-indigo-500/40 rounded p-2 text-xs text-white"></select>
+                            <button onclick="cerrarSesion('jurado')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px]">Cerrar sesión</button>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Se muestran solo los equipos con pago aprobado.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-950 text-indigo-400 uppercase border-b border-slate-800">
+                                <tr>
+                                    <th class="p-2.5">Integrantes</th>
+                                    <th class="p-2.5">C.I. / Celular</th>
+                                    <th class="p-2.5">Tutor / Asesor</th>
+                                    <th class="p-2.5">Categoría / Subdivisión</th>
+                                    <th class="p-2.5">Equipo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaJuradosBody" class="divide-y divide-slate-800/50"></tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-950 text-indigo-400 uppercase border-b border-slate-800">
-                            <tr>
-                                <th class="p-2.5">Integrantes</th>
-                                <th class="p-2.5">C.I. / Celular</th>
-                                <th class="p-2.5">Tutor / Asesor</th>
-                                <th class="p-2.5">Categoría / Subdivisión</th>
-                                <th class="p-2.5">Equipo</th>
-                                <th class="p-2.5 text-center">Estado Pago</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaJuradosBody" class="divide-y divide-slate-800/50"></tbody>
-                    </table>
+
+                <!-- Publicar ganadores -->
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-amber-500/40 space-y-4">
+                    <h2 class="text-xl font-bold text-amber-400"><i class="fa-solid fa-trophy mr-2"></i>Publicar Ganadores</h2>
+                    <p class="text-[11px] text-slate-400">Elige la categoría y asigna los lugares. Al publicar, los ganadores aparecen en la página de Inicio. Puedes volver a publicar para corregir.</p>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <div><label class="block text-[10px] text-slate-400 uppercase mb-1">Categoría</label><select id="ganCat" onchange="onGanCat()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select></div>
+                        <div><label class="block text-[10px] text-slate-400 uppercase mb-1">Subdivisión</label><select id="ganSub" onchange="onGanSub()" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select></div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-3">
+                        <div><label class="block text-[10px] text-amber-300 uppercase mb-1">🥇 Primer lugar</label><select id="gan1" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select></div>
+                        <div><label class="block text-[10px] text-slate-300 uppercase mb-1">🥈 Segundo lugar</label><select id="gan2" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select></div>
+                        <div><label class="block text-[10px] text-orange-300 uppercase mb-1">🥉 Tercer lugar</label><select id="gan3" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select></div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="btnPublicar" onclick="publicarGanadores()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-xs"><i class="fa-solid fa-bullhorn mr-1"></i> Publicar ganadores</button>
+                        <button onclick="retirarGanadores()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs">Retirar publicación de esta categoría</button>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase mb-2">Ya publicados</p>
+                        <div id="ganPublicadosJurado" class="grid md:grid-cols-2 gap-2 text-xs"></div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- 7. PANEL DE ADMINISTRADORES -->
+        <!-- 8. PANEL DE ADMINISTRADORES -->
         <section id="sec-admin" class="hidden space-y-6">
             <div class="max-w-xl mx-auto bg-slate-900/90 p-6 rounded-2xl border border-rose-500/40 text-center" id="adminLoginBox">
                 <h2 class="text-xl font-bold text-rose-400 mb-2"><i class="fa-solid fa-lock mr-2"></i>Acceso para Administradores</h2>
-                <input type="password" id="passAdmin" placeholder="Contraseña de Administrador" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs mb-3 text-center">
-                <button onclick="verificarLoginAdmin()" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded text-xs">Acceder a Gestión General</button>
+                <input type="password" id="passAdmin" placeholder="Contraseña de Administrador" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white text-xs mb-3 text-center" onkeydown="if(event.key==='Enter')login('admin')">
+                <button onclick="login('admin')" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded text-xs">Acceder a Gestión General</button>
             </div>
 
             <div id="adminPanelContent" class="hidden space-y-6">
+                <!-- Estadísticas (solo admin) -->
+                <div id="adminStats" class="grid grid-cols-2 md:grid-cols-6 gap-3"></div>
+
                 <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-rose-400"><i class="fa-solid fa-sliders mr-2"></i>Gestión General de Base de Datos</h2>
-                        <div class="flex gap-2">
-                            <button onclick="cargarDatosDesdeNube()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold"><i class="fa-solid fa-rotate mr-1"></i> Sincronizar Nube</button>
-                            <button onclick="exportarCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded"><i class="fa-solid fa-download mr-1"></i> Exportar Lista (CSV)</button>
+                    <div class="flex flex-wrap justify-between items-center gap-2">
+                        <h2 class="text-xl font-bold text-rose-400"><i class="fa-solid fa-sliders mr-2"></i>Gestión General</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="cargarDatos(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-xs font-bold"><i class="fa-solid fa-rotate mr-1"></i> Sincronizar</button>
+                            <button onclick="exportarCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded"><i class="fa-solid fa-download mr-1"></i> Exportar (CSV)</button>
+                            <button onclick="cerrarSesion('admin')" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px]">Cerrar sesión</button>
                         </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <input id="admBuscar" oninput="renderAdmin()" placeholder="Buscar equipo, nombre, C.I. o código…" class="flex-1 min-w-[200px] bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white">
+                        <select id="admFiltroCat" onchange="renderAdmin()" class="bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select>
+                        <select id="admFiltroEstado" onchange="renderAdmin()" class="bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white">
+                            <option value="TODOS">Todos los estados</option><option>En Revisión</option><option>Aprobado</option><option>Rechazado</option>
+                        </select>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-300">
                             <thead class="bg-slate-950 text-rose-400 uppercase border-b border-slate-800">
                                 <tr>
+                                    <th class="p-2.5">Cód.</th>
                                     <th class="p-2.5">Integrantes</th>
-                                    <th class="p-2.5">C.I.</th>
-                                    <th class="p-2.5">Celular</th>
+                                    <th class="p-2.5">C.I. / Celular</th>
                                     <th class="p-2.5">Tutor</th>
                                     <th class="p-2.5">Categoría / Sub</th>
                                     <th class="p-2.5">Equipo</th>
                                     <th class="p-2.5 text-center">Comprobantes</th>
-                                    <th class="p-2.5 text-center">Estado Pago</th>
+                                    <th class="p-2.5 text-center">Estado de pago</th>
+                                    <th class="p-2.5 text-center">Imprimir</th>
                                 </tr>
                             </thead>
                             <tbody id="tablaAdminBody" class="divide-y divide-slate-800/50"></tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- Impresión -->
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-cyan-500/40 space-y-5">
+                    <h2 class="text-xl font-bold text-cyan-400"><i class="fa-solid fa-print mr-2"></i>Credenciales y Certificados</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-3 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                            <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-id-card mr-1 text-cyan-400"></i> Credenciales (con QR de refrigerio)</h3>
+                            <p class="text-[11px] text-slate-400">Al aprobar un pago, la credencial se agrega sola a la cola. Los registros en puerta se imprimen al guardar.</p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs text-amber-300">En cola: <strong id="colaN">0</strong></span>
+                                <button onclick="imprimirCola()" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold">Imprimir cola</button>
+                                <button onclick="vaciarCola()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs">Vaciar</button>
+                            </div>
+                            <select id="credCat" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white"></select>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="credencialesMasivas()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-xs font-bold">Todos los aprobados (categoría elegida)</button>
+                                <button onclick="credencialesPersonal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-xs font-bold">Personal (jurados / logística)</button>
+                            </div>
+                        </div>
+                        <div class="space-y-3 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                            <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-certificate mr-1 text-amber-400"></i> Certificados (se imprime solo el texto)</h3>
+                            <select id="certTipo" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white">
+                                <option value="part">Participación (todos los aprobados)</option>
+                                <option value="gan">Ganadores (1.º, 2.º y 3.º publicados)</option>
+                                <option value="pers">Jurados y personal</option>
+                            </select>
+                            <select id="certCat" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white"></select>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="certificadosMasivos()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs font-bold">Vista previa e imprimir</button>
+                                <button onclick="certificadosPrueba()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded text-xs font-bold">Hoja de prueba (calibrar)</button>
+                            </div>
+                            <p class="text-[10px] text-slate-500">Haz primero la hoja de prueba sobre una hoja en blanco o un certificado sobrante y ajusta la posición.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal -->
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <h2 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-people-group mr-2"></i>Jurados y Logística</h2>
+                    <form onsubmit="agregarPersonal(event)" class="grid md:grid-cols-5 gap-2 items-end">
+                        <div class="md:col-span-2"><label class="block text-[10px] text-slate-400 uppercase mb-1">Nombre completo *</label><input id="perNombre" required maxlength="80" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></div>
+                        <div><label class="block text-[10px] text-slate-400 uppercase mb-1">C.I. (opcional)</label><input id="perCi" maxlength="20" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></div>
+                        <div><label class="block text-[10px] text-slate-400 uppercase mb-1">Rol *</label>
+                            <select id="perRol" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"><option>Jurado</option><option>Logística</option><option>Organizador</option></select></div>
+                        <div><label class="block text-[10px] text-slate-400 uppercase mb-1">Categoría (jurados)</label><select id="perCat" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white"></select></div>
+                        <button class="md:col-span-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs">Agregar</button>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-950 text-emerald-400 uppercase border-b border-slate-800"><tr><th class="p-2.5">Cód.</th><th class="p-2.5">Nombre</th><th class="p-2.5">Rol</th><th class="p-2.5">Categoría</th><th class="p-2.5 text-center">Imprimir</th></tr></thead>
+                            <tbody id="tablaPersonalBody" class="divide-y divide-slate-800/50"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- PIE DE PÁGINA -->
         <footer class="mt-16 pt-8 border-t border-slate-800/80 text-center text-xs text-slate-400 space-y-3">
             <p><strong>Club Oruro Mecatrónico</strong> | Facultad Nacional de Ingeniería (FNI - UTO)</p>
             <div class="flex justify-center gap-4 text-slate-400">
-                <a href="https://www.facebook.com/share/1D6ig4wCpq/" target="_blank" class="hover:text-cyan-400"><i class="fa-brands fa-facebook"></i> Facebook</a>
-                <a href="https://www.tiktok.com/@club.oruro.mecatr?_r=1&_t=ZS-9AlYwjAHgl5" target="_blank" class="hover:text-cyan-400"><i class="fa-brands fa-tiktok"></i> TikTok</a>
-                <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" class="hover:text-emerald-400"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                <a href="https://www.facebook.com/share/1D6ig4wCpq/" target="_blank" rel="noopener" class="hover:text-cyan-400"><i class="fa-brands fa-facebook"></i> Facebook</a>
+                <a href="https://www.tiktok.com/@club.oruro.mecatr?_r=1&_t=ZS-9AlYwjAHgl5" target="_blank" rel="noopener" class="hover:text-cyan-400"><i class="fa-brands fa-tiktok"></i> TikTok</a>
+                <a href="https://chat.whatsapp.com/KSLAcUs7qwhBeyIQWadO45?s=qt&p=a&mlu=4&ilr=4" target="_blank" rel="noopener" class="hover:text-emerald-400"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
             </div>
             <p class="text-[10px] text-slate-600">Oruro - Bolivia</p>
         </footer>
-
     </main>
 
+    <!-- Vista previa de impresión (credenciales / certificados) -->
+    <div id="overlay" class="hidden fixed inset-0 z-[70] bg-slate-950/95 overflow-auto">
+        <div class="sticky top-0 z-10 bg-slate-900 border-b border-cyan-500/40 p-3 flex flex-wrap items-center gap-3">
+            <strong id="ovTitulo" class="text-white text-sm"></strong>
+            <button onclick="imprimirAhora()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded text-xs"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+            <button onclick="cerrarOverlay()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Cerrar</button>
+            <div id="ovCertCtl" class="hidden flex flex-wrap items-end gap-3 text-[10px] text-slate-300">
+                <label>Mover X (mm)<input id="ctDx" type="number" step="0.5" value="0" onchange="recalcCert()" class="block w-16 bg-slate-950 border border-slate-700 rounded p-1 text-white"></label>
+                <label>Mover Y (mm)<input id="ctDy" type="number" step="0.5" value="0" onchange="recalcCert()" class="block w-16 bg-slate-950 border border-slate-700 rounded p-1 text-white"></label>
+                <label>Tamaño nombre (%)<input id="ctEsc" type="number" step="5" value="100" onchange="recalcCert()" class="block w-16 bg-slate-950 border border-slate-700 rounded p-1 text-white"></label>
+                <label>Letra ganadores<select id="ctFontG" onchange="recalcCert()" class="block bg-slate-950 border border-slate-700 rounded p-1 text-white"></select></label>
+                <label>Letra participación<select id="ctFontP" onchange="recalcCert()" class="block bg-slate-950 border border-slate-700 rounded p-1 text-white"></select></label>
+                <label>Plantilla ganadores (imagen)<input type="file" accept="image/*" onchange="setFondo('gan',this)" class="block w-40 text-[9px]"></label>
+                <label>Plantilla participación (imagen)<input type="file" accept="image/*" onchange="setFondo('par',this)" class="block w-40 text-[9px]"></label>
+            </div>
+        </div>
+        <p id="ovAviso" class="hidden text-[11px] text-amber-300 px-4 pt-2">La plantilla de fondo es solo para comprobar la posición en pantalla: no se imprime.</p>
+        <div id="ovHost" class="p-4 flex flex-col items-center gap-4 bg-slate-800"></div>
+    </div>
+
+    <style id="pageStyle"></style>
+    <div id="printArea"></div>
+
     <script>
-        let participantes = JSON.parse(localStorage.getItem('om_encuentro_2026')) || [];
-        
-        // URL DE GOOGLE APPS SCRIPT
-        const urlGoogleAppsScript = "https://script.google.com/macros/s/AKfycbySgb1cGmI5CLOQ94B2CPjllhPQ89hG_fv8LVL2sOyxNqzOag8OQrMS5ANppVUbmBmWfw/exec";
+    // =====================================================================
+    //  CONFIGURACIÓN
+    // =====================================================================
+    const API = "https://script.google.com/macros/s/AKfycbySgb1cGmI5CLOQ94B2CPjllhPQ89hG_fv8LVL2sOyxNqzOag8OQrMS5ANppVUbmBmWfw/exec";
 
-        document.addEventListener("DOMContentLoaded", () => {
-            generarCamposIntegrantes('numIntegrantes', 'integrantesContainer');
-            generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
-            initCanvasBackground();
-            cargarDatosDesdeNube();
+    const CATEGORIAS = [
+        { n: "Minisumo Autónomo", subs: ["Amateur", "Libre"], max: 3, pdf: ["MINISUMO_AUTÓNOMO_AMATEUR_IV_2026.pdf", "MINISUMO_AUTÓNOMO_LIBRE_IV_2026.pdf"] },
+        { n: "Minisumo RC", subs: ["Amateur", "Libre"], max: 3, pdf: ["MINISUMO_RC_AMATEUR_IV_2026.pdf", "MINISUMO_RC_LIBRE_IV_2026.pdf"] },
+        { n: "Legosumo", subs: ["Amateur"], max: 3, pdf: ["LEGOSUMO_IV_2026.pdf"] },
+        { n: "Microsumo", subs: ["Libre"], max: 3, pdf: ["MICROSUMO_IV_2026.pdf"] },
+        { n: "Seguidor de Línea Velocista", subs: ["Libre"], max: 3, pdf: ["SEGUIDOR_DE_LÍNEA_VELOCISTA_IV_2026.pdf"] },
+        { n: "Seguidor de Línea Destreza", subs: ["Libre"], max: 3, pdf: ["SEGUIDOR_DE_LINEA_DESTREZA_IV_2026.pdf"] },
+        { n: "Seguidor de Línea Kits", subs: ["Amateur"], max: 3, pdf: ["Seguidor_de_lineas_KIT_IV_2026.pdf"] },
+        { n: "Robofut", subs: ["Amateur", "Libre"], max: 3, pdf: ["ROBOFUT_AMATEUR_IV_2026.pdf", "ROBOFUT_LIBRE_IV_2026.pdf"] },
+        { n: "Laberinto", subs: ["Amateur", "Libre"], max: 3, pdf: ["LABERINTO_AMATEUR_IV_2026.pdf", "LABERINTO_LIBRE_IV_2026.pdf"] },
+        { n: "Carrera de Insectos", subs: ["Libre"], max: 3, pdf: ["CARRERA_INSECTOS_IV_2026.pdf"] },
+        { n: "Otto Robotdance", subs: ["Amateur"], max: 3, pdf: ["OTTO_ROBOTDANCE_IV_2026.pdf"] },
+        { n: "Creatividad e Innovación Tecnológica", subs: ["Libre"], max: 4, pdf: ["CREATIVIDAD_E_INNOVACIÓN_TECNOLÓGICA_IV_2026.pdf"] },
+        { n: "Mini Warbot 3 Libras", subs: ["Libre"], max: 3, pdf: ["MINI_WARBOT_3lb_IV_2026.pdf"] }
+    ];
+    const PRECIOS = { Amateur: 65, Libre: 110, FNIAmateur: 55, FNILibre: 90 };
+    const COMBOS = CATEGORIAS.flatMap(c => c.subs.map(s => ({ cat: c.n, sub: s, texto: c.n + " " + s })));
+
+    // =====================================================================
+    //  UTILIDADES
+    // =====================================================================
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const safeUrl = u => /^https:\/\/(drive|docs)\.google\.com\//.test(u || "") ? u : "";
+    const subBase = s => /libre/i.test(s || "") ? "Libre" : "Amateur";
+    const esFni = s => /fni/i.test(s || "");
+    const precioDe = s => { const m = /\((\d+)\s*Bs\)/.exec(s || ""); return m ? +m[1] : 0; };
+    const catDef = n => CATEGORIAS.find(c => c.n === n);
+    function titulo(s) {
+        const peq = ["de", "del", "la", "las", "los", "y", "e", "da", "do", "van", "von"];
+        return String(s || "").toLowerCase().split(/\s+/).filter(Boolean).map((w, i) => (i > 0 && peq.includes(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    }
+    let toastT;
+    function toast(msg, tipo) {
+        const t = $("toast");
+        t.textContent = msg;
+        t.className = "px-4 py-3 rounded-xl text-sm font-semibold shadow-2xl " + (tipo === "err" ? "bg-rose-700 text-white" : "bg-emerald-700 text-white");
+        clearTimeout(toastT);
+        toastT = setTimeout(() => t.classList.add("hidden"), 5000);
+    }
+    function cargarLib(src) { const s = document.createElement("script"); s.src = src; document.head.appendChild(s); }
+
+    // =====================================================================
+    //  CONEXIÓN CON EL SERVIDOR
+    // =====================================================================
+    async function api(payload) {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 90000);
+        try {
+            const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), signal: ctl.signal, redirect: "follow" });
+            return await r.json();
+        } catch (err) {
+            return { ok: false, net: true, error: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo." };
+        } finally { clearTimeout(t); }
+    }
+
+    // Sesiones (la contraseña vive solo en esta pestaña; se borra al cerrarla)
+    let SES = {};
+    try { SES = JSON.parse(sessionStorage.getItem("om_ses") || "{}"); } catch (e) { SES = {}; }
+    const guardarSes = () => { try { sessionStorage.setItem("om_ses", JSON.stringify(SES)); } catch (e) {} };
+    const passDatos = () => SES.admin || SES.jurado;
+    const passLog = () => SES.logistica || SES.admin;
+
+    let D = { participantes: [], ganadores: [], personal: [] };
+    let COLA = [];
+    try { COLA = JSON.parse(sessionStorage.getItem("om_cola") || "[]"); } catch (e) { COLA = []; }
+    const guardarCola = () => { try { sessionStorage.setItem("om_cola", JSON.stringify(COLA)); } catch (e) {} };
+
+    // =====================================================================
+    //  NAVEGACIÓN
+    // =====================================================================
+    const TABS = ["inicio", "institucional", "convocatoria", "registro", "puerta", "refri", "jurados", "admin"];
+    function switchTab(tab) {
+        if (tab === "puerta" && !SES.admin) tab = "admin";
+        if (tab !== "refri") pararCamara();
+        TABS.forEach(t => $("sec-" + t).classList.add("hidden"));
+        $("sec-" + tab).classList.remove("hidden");
+        if (tab === "inicio") cargarGanadoresPublicos();
+        if (tab === "refri" && passLog()) { $("refCodigo").focus(); cargarResumenRefri(); }
+        window.scrollTo({ top: 0 });
+    }
+
+    function syncUI() {
+        const admin = !!SES.admin, jur = !!(SES.jurado || SES.admin), log = !!(SES.logistica || SES.admin);
+        $("navBtnPuerta").classList.toggle("hidden", !admin);
+        $("adminLoginBox").classList.toggle("hidden", admin);
+        $("adminPanelContent").classList.toggle("hidden", !admin);
+        $("juradoLoginBox").classList.toggle("hidden", jur);
+        $("juradoPanelContent").classList.toggle("hidden", !jur);
+        $("refriLoginBox").classList.toggle("hidden", log);
+        $("refriPanelContent").classList.toggle("hidden", !log);
+    }
+
+    async function login(tipo) {
+        const idc = { admin: "passAdmin", jurado: "passJurado", logistica: "passLog" }[tipo];
+        const pass = $(idc).value;
+        if (!pass) { toast("Escribe la contraseña.", "err"); return; }
+        const r = await api({ action: "login", pass });
+        if (!r.ok) { toast(r.error || "Contraseña incorrecta.", "err"); return; }
+        const permitido = r.rol === "admin" || r.rol === tipo;
+        if (!permitido) { toast("Esa contraseña no da acceso a este panel.", "err"); return; }
+        SES[tipo] = pass;
+        guardarSes();
+        $(idc).value = "";
+        syncUI();
+        if (tipo === "admin" || tipo === "jurado") await cargarDatos(false);
+        if (tipo === "logistica" || tipo === "admin") { cargarResumenRefri(); }
+    }
+
+    function cerrarSesion(tipo) {
+        delete SES[tipo];
+        if (tipo === "admin") { delete SES.jurado; delete SES.logistica; }
+        guardarSes();
+        if (!SES.admin && !SES.jurado) D = { participantes: [], ganadores: [], personal: [] };
+        pararCamara();
+        syncUI();
+        renderAll();
+        if (tipo === "admin" && !$("sec-puerta").classList.contains("hidden")) switchTab("admin");
+    }
+
+    async function cargarDatos(avisar) {
+        const intentos = [SES.admin, SES.jurado].filter(Boolean);
+        for (const pass of intentos) {
+            const r = await api({ action: "listar", pass });
+            if (r.ok) {
+                D = { participantes: r.participantes || [], ganadores: r.ganadores || [], personal: r.personal || [] };
+                renderAll();
+                if (avisar) toast("Datos actualizados.");
+                return true;
+            }
+            if (r.auth) { if (pass === SES.admin) delete SES.admin; else delete SES.jurado; guardarSes(); syncUI(); }
+            else { toast(r.error, "err"); return false; }
+        }
+        if (intentos.length) toast("La sesión venció. Ingresa de nuevo.", "err");
+        return false;
+    }
+
+    // =====================================================================
+    //  FORMULARIOS DE INSCRIPCIÓN (web y puerta comparten el mismo código)
+    // =====================================================================
+    function formHTML(p, puerta) {
+        const lbl = "block text-xs font-medium text-slate-300 uppercase mb-1";
+        const inp = "w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs";
+        const color = puerta ? "bg-amber-600 hover:bg-amber-500 text-white" : "bg-cyan-500 hover:bg-cyan-400 text-slate-950";
+        return `
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="${lbl}">Categoría Oficial *</label><select id="${p}Cat" required onchange="onCategoria('${p}')" class="${inp}"></select></div>
+            <div><label class="${lbl}">Subdivisión *</label><select id="${p}Sub" required onchange="actualizarPrecio('${p}')" class="${inp}"></select></div>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" id="${p}Fni" onchange="onFni('${p}')"> Soy estudiante de la FNI (aplica descuento)</label>
+        <p class="text-xs text-amber-300">${puerta ? "Cobrar en efectivo" : "Monto de inscripción"}: <strong id="${p}Precio"></strong></p>
+        <div><label class="${lbl}">Número de Integrantes *</label><select id="${p}Num" onchange="generarIntegrantes('${p}')" class="${inp}"></select></div>
+        <div id="${p}Ints" class="space-y-3 border-t border-slate-800 pt-3"></div>
+        <div><label class="${lbl}">Nombre Completo del Tutor / Asesor *</label><input type="text" id="${p}Tutor" required maxlength="80" placeholder="Ej. Ing. Carlos Mendoza (Obligatorio para menores de edad)" class="${inp}"></div>
+        <div id="${p}FniBox" class="hidden p-3 bg-rose-950/40 rounded-xl border border-rose-500/40 space-y-2">
+            <label class="block text-xs font-bold text-rose-300 uppercase">Matrícula / Carnet Universitario FNI ${puerta ? "(opcional en puerta)" : "(obligatorio para el descuento) *"}</label>
+            <input type="file" id="${p}FniDoc" accept="image/*,.pdf" class="w-full bg-slate-950 border border-slate-700 rounded p-1 text-xs text-white">
+        </div>
+        <div><label class="${lbl}">Nombre del Equipo *</label><input type="text" id="${p}Equipo" required maxlength="60" placeholder="Ej. Team Alpha" class="${inp}"></div>
+        ${puerta ? `<label class="flex items-center gap-2 text-xs text-amber-200"><input type="checkbox" id="pAuto" checked> Imprimir credenciales al guardar</label>` : `
+        <div class="p-3 bg-slate-950 rounded-xl border border-cyan-500/30 space-y-2">
+            <label class="block text-xs font-bold text-cyan-400 uppercase"><i class="fa-solid fa-image mr-1"></i> Foto del Comprobante de Pago (QR o Recibo de Transferencia) *</label>
+            <input type="file" id="wPago" accept="image/*,.pdf" required onchange="previsualizarComprobante(event)" class="w-full bg-slate-900 border border-slate-700 rounded p-1.5 text-xs text-white">
+            <div id="previewComprobanteBox" class="hidden mt-2 text-center">
+                <p class="text-[10px] text-slate-400 mb-1">Vista Previa del Comprobante:</p>
+                <img id="imgPreviewComprobante" src="" class="max-h-36 mx-auto rounded border border-slate-700 object-contain">
+            </div>
+        </div>`}
+        <button type="submit" id="${p}Btn" class="w-full py-3 ${color} font-bold rounded-lg text-sm uppercase transition shadow-lg">Guardar</button>`;
+    }
+
+    function initForm(p) {
+        $(p + "Cat").innerHTML = CATEGORIAS.map(c => `<option value="${esc(c.n)}">${esc(c.n)}${c.max === 4 ? " (hasta 4 integrantes)" : ""}</option>`).join("");
+        onCategoria(p);
+        onFni(p);
+    }
+    function onCategoria(p) {
+        const def = catDef($(p + "Cat").value);
+        $(p + "Sub").innerHTML = def.subs.map(s => `<option value="${s}">${s}</option>`).join("");
+        const prevNum = +($(p + "Num").value || 1);
+        $(p + "Num").innerHTML = Array.from({ length: def.max }, (_, i) => `<option value="${i + 1}">${i + 1} Integrante${i ? "s" : ""}</option>`).join("");
+        $(p + "Num").value = String(Math.min(prevNum, def.max));
+        generarIntegrantes(p);
+        actualizarPrecio(p);
+    }
+    function onFni(p) {
+        $(p + "FniBox").classList.toggle("hidden", !$(p + "Fni").checked);
+        actualizarPrecio(p);
+    }
+    function subTexto(p) {
+        const sub = $(p + "Sub").value, fni = $(p + "Fni").checked;
+        const precio = PRECIOS[(fni ? "FNI" : "") + sub];
+        return `${fni ? "FNI " : ""}${sub} (${precio} Bs)`;
+    }
+    function actualizarPrecio(p) { $(p + "Precio").textContent = precioDe(subTexto(p)) + " Bs"; }
+    function generarIntegrantes(p) {
+        const num = +$(p + "Num").value, box = $(p + "Ints");
+        const prev = {};
+        box.querySelectorAll("input").forEach(i => prev[i.id] = i.value);
+        let h = "";
+        for (let i = 1; i <= num; i++) {
+            h += `<div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-2">
+                <span class="text-xs font-bold text-cyan-400">Integrante ${i}</span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <input type="text" id="${p}Int${i}N" required maxlength="80" placeholder="Nombre Completo" class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
+                    <input type="text" id="${p}Int${i}C" required maxlength="20" placeholder="C.I." class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
+                    <input type="tel" id="${p}Int${i}T" required maxlength="20" inputmode="tel" pattern="[0-9+ \\-]{7,20}" title="Solo números (ej. 71234567)" placeholder="Nº Celular / WhatsApp" class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
+                </div>
+            </div>`;
+        }
+        box.innerHTML = h;
+        Object.keys(prev).forEach(id => { if ($(id)) $(id).value = prev[id]; });
+    }
+    function previsualizarComprobante(event) {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = e => { $("imgPreviewComprobante").src = e.target.result; $("previewComprobanteBox").classList.remove("hidden"); };
+            reader.readAsDataURL(file);
+        } else $("previewComprobanteBox").classList.add("hidden");
+    }
+    function fileToBase64(file) {
+        return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error("No se pudo leer el archivo.")); r.readAsDataURL(file); });
+    }
+    // Reduce las fotos del celular (de varios MB a ~300 KB) para que suban rápido
+    async function prepararArchivo(file) {
+        if (!file) return "";
+        if (file.size > 20 * 1024 * 1024) throw new Error('El archivo "' + file.name + '" pesa más de 20 MB.');
+        if (file.type === "application/pdf") {
+            if (file.size > 6 * 1024 * 1024) throw new Error("El PDF pesa más de 6 MB. Sube una foto en su lugar.");
+            return fileToBase64(file);
+        }
+        if (!file.type.startsWith("image/")) throw new Error("Solo se aceptan imágenes o PDF.");
+        const img = await new Promise((res, rej) => {
+            const im = new Image(), url = URL.createObjectURL(file);
+            im.onload = () => { URL.revokeObjectURL(url); res(im); };
+            im.onerror = () => rej(new Error("No se pudo leer la imagen. Prueba con otra foto o un PDF."));
+            im.src = url;
         });
+        const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+        const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h);
+        return cv.toDataURL("image/jpeg", 0.82);
+    }
 
-        function switchTab(tab) {
-            ['inicio', 'institucional', 'convocatoria', 'registro', 'puerta', 'jurados', 'admin'].forEach(t => {
-                document.getElementById(`sec-${t}`).classList.add('hidden');
+    async function enviarInscripcion(e, p) {
+        e.preventDefault();
+        const puerta = p === "p", btn = $(p + "Btn");
+        const cat = $(p + "Cat").value, num = +$(p + "Num").value, fni = $(p + "Fni").checked;
+        if (puerta && !SES.admin) { toast("La sesión de administrador venció. Ingresa de nuevo.", "err"); switchTab("admin"); return; }
+        if (!puerta && fni && !$(p + "FniDoc").files.length) { toast("Adjunta tu matrícula o carnet FNI para el descuento.", "err"); return; }
+        const integrantes = [];
+        for (let i = 1; i <= num; i++) integrantes.push({ nombre: $(`${p}Int${i}N`).value.trim(), ci: $(`${p}Int${i}C`).value.trim(), celular: $(`${p}Int${i}T`).value.trim() });
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando…';
+        try {
+            const fotoPagoBase64 = puerta ? "" : await prepararArchivo($("wPago").files[0]);
+            const fotoFniBase64 = fni && $(p + "FniDoc").files.length ? await prepararArchivo($(p + "FniDoc").files[0]) : "";
+            const r = await api({
+                action: "inscribir", tipo: puerta ? "Inscripción Puerta" : "Online", pass: puerta ? SES.admin : undefined,
+                categoria: cat, subdivision: subTexto(p), tutor: $(p + "Tutor").value.trim(), equipo: $(p + "Equipo").value.trim(),
+                integrantes, fotoPagoBase64, fotoFniBase64
             });
-            document.getElementById(`sec-${tab}`).classList.remove('hidden');
-        }
-
-        function generarCamposIntegrantes(selectId, containerId) {
-            const num = parseInt(document.getElementById(selectId).value);
-            const container = document.getElementById(containerId);
-            container.innerHTML = "";
-            for(let i = 1; i <= num; i++) {
-                container.innerHTML += `
-                    <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-2">
-                        <span class="text-xs font-bold text-cyan-400">Integrante ${i}</span>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            <input type="text" id="${containerId}_nombreInt${i}" required placeholder="Nombre Completo" class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
-                            <input type="text" id="${containerId}_ciInt${i}" required placeholder="C.I." class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
-                            <input type="tel" id="${containerId}_celInt${i}" required placeholder="Nº Celular / WhatsApp" class="bg-slate-900 border border-slate-700 rounded p-2 text-white text-xs">
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function verificarSubdivisionFNI(subSelectId, boxId) {
-            const sub = document.getElementById(subSelectId).value;
-            const fniBox = document.getElementById(boxId);
-            if(sub.includes("FNI")) {
-                fniBox.classList.remove('hidden');
-            } else {
-                fniBox.classList.add('hidden');
-            }
-        }
-
-        function previsualizarComprobante(event) {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('imgPreviewComprobante').src = e.target.result;
-                    document.getElementById('previewComprobanteBox').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                document.getElementById('previewComprobanteBox').classList.add('hidden');
-            }
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                if (!file) { resolve(""); return; }
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        async function procesarInscripcion(e, tipo) {
-            e.preventDefault();
-            const btn = document.getElementById('btnRegSubmit');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`;
-
-            const num = parseInt(document.getElementById('numIntegrantes').value);
-            const categoria = document.getElementById('regCategoria').value;
-
-            if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
-                alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
-                btn.disabled = false;
-                btn.innerHTML = "Guardar";
+            if (!r.ok) {
+                if (r.auth) { cerrarSesion("admin"); }
+                toast(r.error || "No se pudo guardar.", "err");
                 return;
             }
-
-            let nombresArr = [];
-            let cisArr = [];
-            let celsArr = [];
-
-            for(let i = 1; i <= num; i++) {
-                nombresArr.push(document.getElementById(`integrantesContainer_nombreInt${i}`).value.trim());
-                cisArr.push(document.getElementById(`integrantesContainer_ciInt${i}`).value.trim());
-                celsArr.push(document.getElementById(`integrantesContainer_celInt${i}`).value.trim());
+            if (puerta) {
+                if (r.equipo) D.participantes.push(r.equipo);
+                const m = $("msgPuertaExito");
+                m.textContent = "¡Guardado y aprobado! Código del equipo: " + r.codigo;
+                m.classList.remove("hidden");
+                setTimeout(() => m.classList.add("hidden"), 8000);
+                const auto = $("pAuto").checked;
+                $("formPuerta").reset();
+                initForm("p");
+                if (r.equipo) abrirCredenciales(credencialesDeEquipo(r.equipo), auto);
+                renderAll();
+            } else {
+                $("wCodigoOk").textContent = r.codigo;
+                $("formWeb").classList.add("hidden");
+                $("msgInscripcionExitosa").classList.remove("hidden");
             }
-
-            const subdivision = document.getElementById('regSubdivision').value;
-            const tutor = document.getElementById('regTutor').value.trim();
-            const equipo = document.getElementById('regEquipo').value.trim();
-            
-            const fotoInput = document.getElementById('regFotoComprobante');
-            const fniInput = document.getElementById('fniDocumento');
-
-            let fotoPagoBase64 = "";
-            let fotoFniBase64 = "";
-
-            if (fotoInput.files.length > 0) {
-                fotoPagoBase64 = await fileToBase64(fotoInput.files[0]);
-            }
-            if (fniInput && fniInput.files.length > 0) {
-                fotoFniBase64 = await fileToBase64(fniInput.files[0]);
-            }
-
-            const nombresStr = nombresArr.join(" / ");
-            const cisStr = cisArr.join(", ");
-            const celsStr = celsArr.join(", ");
-
-            const item = {
-                id: cisStr + "-" + categoria,
-                ci: cisStr, 
-                nombre: nombresStr, 
-                celular: celsStr || "", 
-                tutor, 
-                categoria, 
-                subdivision, 
-                equipo,
-                pago: "En Revisión",
-                tipo: tipo,
-                fotoPagoBase64,
-                fotoFniBase64,
-                documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
-            };
-
-            // Envío directo a Google Apps Script usando mode: "no-cors" para evitar bloqueos CORS
-            enviarANubeDirecto(item, (exito) => {
-                btn.disabled = false;
-                btn.innerHTML = "Guardar";
-
-                if(exito) {
-                    document.getElementById('eventForm').classList.add('hidden');
-                    document.getElementById('msgInscripcionExitosa').classList.remove('hidden');
-                } else {
-                    alert("⚠️ Ocurrió un problema de red al sincronizar. Por favor, verifica tu conexión e inténtalo de nuevo.");
-                }
-            });
-        }
-
-        function reiniciarFormularioWeb() {
-            document.getElementById('eventForm').reset();
-            document.getElementById('eventForm').classList.remove('hidden');
-            document.getElementById('msgInscripcionExitosa').classList.add('hidden');
-            generarCamposIntegrantes('numIntegrantes', 'integrantesContainer');
-            document.getElementById('previewComprobanteBox').classList.add('hidden');
-        }
-
-        async function procesarInscripcionPuerta(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btnPuertaSubmit');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`;
-
-            const num = parseInt(document.getElementById('puertaNumIntegrantes').value);
-            const categoria = document.getElementById('puertaCategoria').value;
-
-            if (num === 4 && categoria !== "Creatividad e Innovación Tecnológica") {
-                alert("⚠️ Error: ¡Solo la categoría de 'Creatividad e Innovación Tecnológica' acepta 4 integrantes!");
-                btn.disabled = false;
-                btn.innerHTML = "Guardar";
-                return;
-            }
-
-            let nombresArr = [];
-            let cisArr = [];
-            let celsArr = [];
-
-            for(let i = 1; i <= num; i++) {
-                nombresArr.push(document.getElementById(`puertaIntegrantesContainer_nombreInt${i}`).value.trim());
-                cisArr.push(document.getElementById(`puertaIntegrantesContainer_ciInt${i}`).value.trim());
-                celsArr.push(document.getElementById(`puertaIntegrantesContainer_celInt${i}`).value.trim());
-            }
-
-            const subdivision = document.getElementById('puertaSubdivision').value;
-            const tutor = document.getElementById('puertaTutor').value.trim();
-            const equipo = document.getElementById('puertaProyecto').value.trim();
-
-            const fniInput = document.getElementById('puertaFniDocumento');
-            let fotoFniBase64 = "";
-            if (fniInput && fniInput.files.length > 0) {
-                fotoFniBase64 = await fileToBase64(fniInput.files[0]);
-            }
-
-            const nombresStr = nombresArr.join(" / ");
-            const cisStr = cisArr.join(", ");
-            const celsStr = celsArr.join(", ");
-
-            const item = {
-                id: cisStr + "-" + categoria,
-                ci: cisStr, 
-                nombre: nombresStr, 
-                celular: celsStr || "", 
-                tutor, 
-                categoria, 
-                subdivision, 
-                equipo,
-                pago: "Pagado (Aprobado)",
-                tipo: "Inscripción Puerta",
-                fotoPagoBase64: "",
-                fotoFniBase64,
-                documentoFni: fotoFniBase64 ? "Verificando..." : "No aplica"
-            };
-
-            guardarParticipanteLocalYCloud(item);
-
-            document.getElementById('msgPuertaExito').classList.remove('hidden');
-            document.getElementById('puertaForm').reset();
-            generarCamposIntegrantes('puertaNumIntegrantes', 'puertaIntegrantesContainer');
-
+        } catch (err) {
+            toast(err.message || "Ocurrió un error.", "err");
+        } finally {
             btn.disabled = false;
-            btn.innerHTML = "Guardar";
-            setTimeout(() => {
-                document.getElementById('msgPuertaExito').classList.add('hidden');
-            }, 4000);
+            btn.textContent = "Guardar";
         }
+    }
+    function reiniciarFormularioWeb() {
+        $("formWeb").reset();
+        $("formWeb").classList.remove("hidden");
+        $("msgInscripcionExitosa").classList.add("hidden");
+        $("previewComprobanteBox").classList.add("hidden");
+        initForm("w");
+    }
 
-        function guardarParticipanteLocalYCloud(item) {
-            const existeIndex = participantes.findIndex(p => p.ci === item.ci && p.categoria === item.categoria);
-            if(existeIndex >= 0) participantes[existeIndex] = item;
-            else participantes.push(item);
+    // =====================================================================
+    //  GANADORES PÚBLICOS (Inicio)
+    // =====================================================================
+    function agruparGanadores(lista) {
+        const g = {};
+        lista.forEach(x => { const k = x.categoria + "|" + x.subdivision; (g[k] = g[k] || { categoria: x.categoria, subdivision: x.subdivision, puestos: [] }).puestos.push(x); });
+        return Object.values(g);
+    }
+    const MEDALLA = { 1: "🥇", 2: "🥈", 3: "🥉" };
+    function ganadoresHTML(lista, conBorrar) {
+        return agruparGanadores(lista).map(g => `
+            <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 space-y-2">
+                <p class="text-xs font-bold text-cyan-400 uppercase">${esc(g.categoria)} · ${esc(g.subdivision)}</p>
+                ${g.puestos.sort((a, b) => a.puesto - b.puesto).map(x => `
+                    <p class="text-sm text-white"><span class="text-lg mr-1">${MEDALLA[x.puesto] || ""}</span><strong>${esc(x.equipo)}</strong><br><span class="text-[11px] text-slate-400 pl-7 block">${esc(x.integrantes)}</span></p>`).join("")}
+            </div>`).join("");
+    }
+    async function cargarGanadoresPublicos() {
+        try {
+            const r = await (await fetch(API)).json();
+            const lista = r && r.ok ? (r.ganadores || []) : [];
+            $("ganadoresPublico").classList.toggle("hidden", !lista.length);
+            $("ganadoresPublicoLista").innerHTML = ganadoresHTML(lista);
+        } catch (e) { /* sin conexión: se oculta */ }
+    }
 
-            localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-            enviarANubeSiExiste(item);
+    // =====================================================================
+    //  PANEL JURADOS + PUBLICAR GANADORES
+    // =====================================================================
+    function aprobados() { return D.participantes.filter(p => p.estado === "Aprobado"); }
+    function renderJurados() {
+        const f = $("filtroJurado").value;
+        $("tablaJuradosBody").innerHTML = aprobados().filter(p => f === "TODAS" || p.categoria === f).map(p => `
+            <tr class="hover:bg-slate-950/50">
+                <td class="p-2.5 font-semibold text-white">${p.integrantes.map(i => esc(i.n)).join("<br>")}</td>
+                <td class="p-2.5 font-mono text-[11px]">${p.integrantes.map(i => `<div>CI ${esc(i.ci)} · <span class="text-emerald-400 font-sans"><i class="fa-brands fa-whatsapp mr-0.5"></i>${esc(i.cel)}</span></div>`).join("")}</td>
+                <td class="p-2.5">${esc(p.tutor || "-")}</td>
+                <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${esc(p.categoria)} (${esc(subBase(p.subdivision))})</span></td>
+                <td class="p-2.5 font-semibold text-amber-400">${esc(p.equipo)}</td>
+            </tr>`).join("") || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Sin equipos aprobados en esta categoría.</td></tr>`;
+        renderGanadoresJurado();
+    }
+    function renderGanadoresJurado() {
+        const cur = $("ganCat").value;
+        $("ganCat").innerHTML = CATEGORIAS.map(c => `<option value="${esc(c.n)}">${esc(c.n)}</option>`).join("");
+        if (cur) $("ganCat").value = cur;
+        const f = $("filtroJurado").value;
+        if (!cur && f !== "TODAS") $("ganCat").value = f;
+        onGanCat(true);
+        $("ganPublicadosJurado").innerHTML = ganadoresHTML(D.ganadores) || `<p class="text-slate-500">Todavía no hay ganadores publicados.</p>`;
+    }
+    function onGanCat(keep) {
+        const def = catDef($("ganCat").value);
+        const cur = $("ganSub").value;
+        $("ganSub").innerHTML = def.subs.map(s => `<option value="${s}">${s}</option>`).join("");
+        if (keep && def.subs.includes(cur)) $("ganSub").value = cur;
+        onGanSub();
+    }
+    function onGanSub() {
+        const cat = $("ganCat").value, sub = $("ganSub").value;
+        const equipos = aprobados().filter(p => p.categoria === cat && subBase(p.subdivision) === sub);
+        const opts = `<option value="">— Sin asignar —</option>` + equipos.map(p => `<option value="${esc(p.codigo)}">${esc(p.equipo)} (${esc(p.integrantes.map(i => i.n).join(", "))})</option>`).join("");
+        [1, 2, 3].forEach(n => {
+            $("gan" + n).innerHTML = opts;
+            const pub = D.ganadores.find(g => g.categoria === cat && g.subdivision === sub && g.puesto === n);
+            if (pub) $("gan" + n).value = pub.codigo;
+        });
+    }
+    async function publicarGanadores() {
+        const cat = $("ganCat").value, sub = $("ganSub").value;
+        const puestos = [1, 2, 3].map(n => ({ puesto: n, codigo: $("gan" + n).value })).filter(x => x.codigo);
+        if (!puestos.length) { toast("Elige al menos el primer lugar.", "err"); return; }
+        if (!puestos.some(x => x.puesto === 1)) { toast("Falta el primer lugar.", "err"); return; }
+        if (new Set(puestos.map(x => x.codigo)).size !== puestos.length) { toast("Un mismo equipo no puede ocupar dos lugares.", "err"); return; }
+        if (!confirm(`¿Publicar los ganadores de ${cat} (${sub})? Aparecerán en la página de Inicio.`)) return;
+        $("btnPublicar").disabled = true;
+        const r = await api({ action: "ganador_publicar", pass: SES.jurado || SES.admin, categoria: cat, subdivision: sub, puestos });
+        $("btnPublicar").disabled = false;
+        if (!r.ok) { toast(r.error, "err"); if (r.auth) cerrarSesion("jurado"); return; }
+        D.ganadores = r.ganadores; renderAll(); toast("Ganadores publicados.");
+    }
+    async function retirarGanadores() {
+        const cat = $("ganCat").value, sub = $("ganSub").value;
+        if (!confirm(`¿Retirar la publicación de ${cat} (${sub})?`)) return;
+        const r = await api({ action: "ganador_retirar", pass: SES.jurado || SES.admin, categoria: cat, subdivision: sub });
+        if (!r.ok) { toast(r.error, "err"); return; }
+        D.ganadores = r.ganadores; renderAll(); toast("Publicación retirada.");
+    }
+
+    // =====================================================================
+    //  PANEL ADMIN
+    // =====================================================================
+    const badgeEstado = e => {
+        const c = e === "Aprobado" ? "bg-emerald-950 text-emerald-400 border-emerald-600" : e === "Rechazado" ? "bg-rose-950 text-rose-400 border-rose-600" : "bg-amber-950 text-amber-400 border-amber-600";
+        return `<span class="${c} px-2 py-1 rounded text-[10px] font-bold border">${esc(e)}</span>`;
+    };
+    function renderStats() {
+        const P = D.participantes, ap = P.filter(p => p.estado === "Aprobado");
+        const card = (t, v, c) => `<div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-center"><p class="text-[10px] uppercase text-slate-400">${t}</p><p class="text-xl font-extrabold ${c}">${v}</p></div>`;
+        $("adminStats").innerHTML =
+            card("Equipos inscritos", P.length, "text-white") +
+            card("Aprobados", ap.length, "text-emerald-400") +
+            card("En revisión", P.filter(p => p.estado === "En Revisión").length, "text-amber-400") +
+            card("Rechazados", P.filter(p => p.estado === "Rechazado").length, "text-rose-400") +
+            card("Participantes", ap.reduce((a, p) => a + p.integrantes.length, 0), "text-cyan-400") +
+            card("Recaudado (aprobados)", ap.reduce((a, p) => a + precioDe(p.subdivision), 0) + " Bs", "text-amber-300");
+    }
+    function renderAdmin() {
+        const q = ($("admBuscar").value || "").toLowerCase(), fc = $("admFiltroCat").value, fe = $("admFiltroEstado").value;
+        const list = D.participantes.filter(p => (fc === "TODAS" || p.categoria === fc) && (fe === "TODOS" || p.estado === fe) &&
+            (!q || [p.equipo, p.nombre, p.ci, p.codigo, p.tutor].join(" ").toLowerCase().includes(q)));
+        $("tablaAdminBody").innerHTML = list.map(p => {
+            const lp = safeUrl(p.pago), lf = safeUrl(p.fni), cod = esc(p.codigo);
+            return `<tr class="hover:bg-slate-950/50 align-top">
+                <td class="p-2.5 font-mono text-cyan-400">${cod}</td>
+                <td class="p-2.5 font-semibold text-white">${p.integrantes.map(i => esc(i.n)).join("<br>")}</td>
+                <td class="p-2.5 font-mono text-[11px]">${p.integrantes.map(i => `<div>${esc(i.ci)} · <span class="text-emerald-400 font-sans">${esc(i.cel)}</span></div>`).join("")}</td>
+                <td class="p-2.5">${esc(p.tutor || "-")}</td>
+                <td class="p-2.5">${esc(p.categoria)} <span class="text-slate-400">(${esc(p.subdivision)})</span><div class="text-[10px] text-slate-500">${esc(p.tipo)}</div></td>
+                <td class="p-2.5 font-semibold text-cyan-400">${esc(p.equipo)}</td>
+                <td class="p-2.5 text-center">${lp ? `<a href="${esc(lp)}" target="_blank" rel="noopener" class="text-cyan-400 underline font-bold block"><i class="fa-solid fa-image mr-1"></i>Pago</a>` : `<span class="text-slate-500 text-[10px] block">Sin comprobante</span>`}
+                    ${lf ? `<a href="${esc(lf)}" target="_blank" rel="noopener" class="text-emerald-400 underline font-bold block mt-1"><i class="fa-solid fa-id-card mr-1"></i>Doc FNI</a>` : ""}</td>
+                <td class="p-2.5 text-center space-y-1">${badgeEstado(p.estado)}
+                    <div class="flex flex-wrap gap-1 justify-center mt-1">
+                        <button onclick="cambiarEstado('${cod}','Aprobado')" class="px-2 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-[10px]">Aprobar</button>
+                        <button onclick="cambiarEstado('${cod}','En Revisión')" class="px-2 py-0.5 bg-amber-700 hover:bg-amber-600 text-white rounded text-[10px]">Revisión</button>
+                        <button onclick="cambiarEstado('${cod}','Rechazado')" class="px-2 py-0.5 bg-rose-700 hover:bg-rose-600 text-white rounded text-[10px]">Rechazar</button>
+                    </div></td>
+                <td class="p-2.5 text-center space-y-1">
+                    ${p.estado === "Aprobado" ? `<button onclick="imprimirEquipo('${cod}')" class="px-2 py-0.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[10px] block mx-auto">Credencial</button>
+                    <button onclick="certEquipo('${cod}')" class="px-2 py-0.5 bg-amber-700 hover:bg-amber-600 text-white rounded text-[10px] block mx-auto">Certificado</button>` : `<span class="text-slate-600 text-[10px]">Solo aprobados</span>`}</td>
+            </tr>`;
+        }).join("") || `<tr><td colspan="9" class="p-4 text-center text-slate-500">Sin resultados.</td></tr>`;
+    }
+    async function cambiarEstado(codigo, estado) {
+        const r = await api({ action: "estado", pass: SES.admin, codigo, estado });
+        if (!r.ok) { toast(r.error, "err"); if (r.auth) cerrarSesion("admin"); return; }
+        const p = D.participantes.find(x => x.codigo === codigo);
+        if (p) p.estado = estado;
+        if (estado === "Aprobado") { if (!COLA.includes(codigo)) COLA.push(codigo); guardarCola(); toast("Aprobado. Su credencial quedó en la cola de impresión."); }
+        else { COLA = COLA.filter(c => c !== codigo); guardarCola(); toast("Estado actualizado: " + estado); }
+        renderAll();
+    }
+    function renderPersonal() {
+        $("tablaPersonalBody").innerHTML = D.personal.map(x => `<tr><td class="p-2.5 font-mono text-cyan-400">${esc(x.codigo)}</td><td class="p-2.5 font-semibold text-white">${esc(x.nombre)}</td><td class="p-2.5">${esc(x.rol)}</td><td class="p-2.5">${esc(x.categoria || "-")}</td>
+            <td class="p-2.5 text-center"><button onclick="imprimirPersonal('${esc(x.codigo)}')" class="px-2 py-0.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[10px]">Credencial</button>
+            <button onclick="certPersonal('${esc(x.codigo)}')" class="px-2 py-0.5 bg-amber-700 hover:bg-amber-600 text-white rounded text-[10px]">Certificado</button></td></tr>`).join("") ||
+            `<tr><td colspan="5" class="p-4 text-center text-slate-500">Aún no hay personal registrado.</td></tr>`;
+    }
+    async function agregarPersonal(e) {
+        e.preventDefault();
+        const r = await api({ action: "personal_agregar", pass: SES.admin, nombre: $("perNombre").value, ci: $("perCi").value, rol: $("perRol").value, categoria: $("perCat").value });
+        if (!r.ok) { toast(r.error, "err"); return; }
+        D.personal = r.personal; $("perNombre").value = ""; $("perCi").value = ""; renderAll(); toast("Agregado.");
+    }
+    function renderAll() {
+        renderStats(); renderAdmin(); renderJurados(); renderPersonal();
+        $("colaN").textContent = COLA.length;
+    }
+    function exportarCSV() {
+        const san = (v, estricto) => { v = String(v == null ? "" : v); return (estricto ? /^[=+\-@\t\r]/ : /^[=@\t\r]/).test(v) ? "'" + v : v; };
+        const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+        let csv = "Código,Nombres,CI,Celular,Tutor,Categoría,Subdivisión,Equipo,Estado,Tipo,Comprobante,Doc FNI\n";
+        D.participantes.forEach(p => {
+            csv += [p.codigo, san(p.nombre, 1), san(p.ci), san(p.celular), san(p.tutor, 1), p.categoria, p.subdivision, san(p.equipo, 1), p.estado, p.tipo, p.pago, p.fni].map(q).join(",") + "\n";
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+        a.download = "participantes_club_oruro_mecatronico.csv";
+        a.click();
+    }
+
+    // =====================================================================
+    //  IMPRESIÓN: base (vista previa + impresión)
+    // =====================================================================
+    let PRINT_MODE = "cred", PRINT_COLA = false;
+    function abrirOverlay() { $("overlay").classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+    function cerrarOverlay() { PRINT_COLA = false; $("overlay").classList.add("hidden"); document.body.style.overflow = ""; }
+    function imprimirAhora() {
+        const pa = $("printArea");
+        pa.innerHTML = $("ovHost").innerHTML;
+        pa.querySelectorAll(".ct-bg").forEach(e => e.remove());
+        pa.querySelectorAll(".ct-sheet").forEach(e => e.style.boxShadow = "none");
+        $("pageStyle").textContent = PRINT_MODE === "cert" ? "@page{size:letter landscape;margin:0}" : "@page{size:letter portrait;margin:0}";
+        setTimeout(() => window.print(), 200);
+    }
+    window.addEventListener("afterprint", () => {
+        if (PRINT_COLA) {
+            PRINT_COLA = false;
+            if (confirm("¿Se imprimieron bien las credenciales de la cola? Aceptar = vaciar la cola.")) vaciarCola();
         }
+    });
 
-        function enviarANubeDirecto(datos, callback) {
-            if (urlGoogleAppsScript.startsWith("http")) {
-                fetch(urlGoogleAppsScript, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: {
-                        "Content-Type": "text/plain"
-                    },
-                    body: JSON.stringify(datos)
-                }).then(() => {
-                    callback(true);
-                    setTimeout(cargarDatosDesdeNube, 1500);
-                }).catch(err => {
-                    console.log("Error de red:", err);
-                    callback(false);
-                });
-            } else {
-                callback(false);
-            }
-        }
+    // =====================================================================
+    //  CREDENCIALES
+    // =====================================================================
+    function qrSVG(texto) {
+        try {
+            const q = qrcode(0, "M"); q.addData(texto); q.make();
+            const n = q.getModuleCount(); let d = "";
+            for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+        } catch (e) { return `<div style="font-size:6pt;padding:2mm">QR no disponible (revisa internet)</div>`; }
+    }
+    const ROL_COLOR = { "COMPETIDOR": "#0e7490", "JURADO": "#4338ca", "LOGÍSTICA": "#047857", "ORGANIZADOR": "#be123c" };
+    function cardHTML(c) {
+        const nombre = String(c.nombre).toUpperCase();
+        const fs = nombre.length <= 18 ? 11 : nombre.length <= 28 ? 9 : 7.5;
+        const cat = c.cat ? c.cat + (c.sub ? " · " + c.sub : "") : "";
+        return `<div class="cr-card">
+            <div class="cr-top"><img src="logo.jpg" class="cr-logo" alt=""><div>IV ENCUENTRO TECNOLÓGICO<br>MECATRÓNICO 2026</div></div>
+            <div class="cr-rol" style="background:${ROL_COLOR[c.rol] || "#334155"}">${esc(c.rol)}</div>
+            <div class="cr-name" style="font-size:${fs}pt">${esc(nombre)}</div>
+            ${c.equipo ? `<div class="cr-eq">${esc(c.equipo)}</div>` : ""}
+            <div class="cr-cat">${esc(cat)}</div>
+            <div class="cr-qr">${qrSVG(c.codigo)}</div>
+            <div class="cr-cod">${esc(c.codigo)}</div>
+            <div class="cr-ref">REFRIGERIO &nbsp;☐ SÁB 14 &nbsp;☐ DOM 15</div>
+        </div>`;
+    }
+    function sheetsCred(items) {
+        let h = "";
+        for (let i = 0; i < items.length; i += 9) h += `<div class="cr-sheet">${items.slice(i, i + 9).map(cardHTML).join("")}</div>`;
+        return h;
+    }
+    const credencialesDeEquipo = p => p.integrantes.map(i => ({ codigo: i.codigo, nombre: i.n, equipo: p.equipo, cat: p.categoria, sub: subBase(p.subdivision), rol: "COMPETIDOR" }));
+    const credencialesDePersonal = x => ({ codigo: x.codigo, nombre: x.nombre, equipo: "", cat: x.categoria || "", sub: "", rol: x.rol.toUpperCase() });
+    function abrirCredenciales(items, auto) {
+        if (!items.length) { toast("No hay credenciales para imprimir.", "err"); return; }
+        PRINT_MODE = "cred";
+        $("ovTitulo").textContent = "Credenciales (" + items.length + ") – 9 por hoja carta";
+        $("ovCertCtl").classList.add("hidden"); $("ovAviso").classList.add("hidden");
+        $("ovHost").innerHTML = sheetsCred(items);
+        if (auto) imprimirAhora(); else abrirOverlay();
+    }
+    function imprimirEquipo(cod) { const p = D.participantes.find(x => x.codigo === cod); if (p) abrirCredenciales(credencialesDeEquipo(p), false); }
+    function imprimirPersonal(cod) { const x = D.personal.find(y => y.codigo === cod); if (x) abrirCredenciales([credencialesDePersonal(x)], false); }
+    function imprimirCola() {
+        const items = COLA.map(c => D.participantes.find(p => p.codigo === c && p.estado === "Aprobado")).filter(Boolean).flatMap(credencialesDeEquipo);
+        if (!items.length) { toast("La cola está vacía. Se llena sola cuando apruebas pagos.", "err"); return; }
+        abrirCredenciales(items, false);
+        PRINT_COLA = true;
+    }
+    function vaciarCola() { COLA = []; guardarCola(); $("colaN").textContent = 0; }
+    function credencialesMasivas() {
+        const f = $("credCat").value;
+        abrirCredenciales(aprobados().filter(p => f === "TODAS" || p.categoria === f).flatMap(credencialesDeEquipo), false);
+    }
+    function credencialesPersonal() { abrirCredenciales(D.personal.map(credencialesDePersonal), false); }
 
-        function enviarANubeSiExiste(datos) {
-            if (urlGoogleAppsScript.startsWith("http")) {
-                fetch(urlGoogleAppsScript, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: {
-                        "Content-Type": "text/plain"
-                    },
-                    body: JSON.stringify(datos)
-                }).then(() => {
-                    setTimeout(cargarDatosDesdeNube, 2000);
-                }).catch(err => console.log("Sincronización en segundo plano pendiente:", err));
-            }
-        }
+    // =====================================================================
+    //  CERTIFICADOS (solo se imprime nombre + línea sobre la plantilla ya impresa)
+    // =====================================================================
+    // Posición medida sobre tus plantillas (porcentaje de la altura de la hoja)
+    const TPL = {
+        gan: { nameTop: 40.97, lineTop: 57.35, nameSize: 1.2, lineSize: 0.23, color: "#555555" },
+        par: { nameTop: 48.8, lineTop: 63.1, nameSize: 0.95, lineSize: 0.23, color: "#111111" }
+    };
+    const FUENTES = ["Cookie", "Caveat", "Dancing Script", "Great Vibes", "Satisfy"];
+    let CFG = { dx: 0, dy: 0, esc: 100, fontG: "Cookie", fontP: "Caveat" };
+    try { Object.assign(CFG, JSON.parse(localStorage.getItem("om_cert_cfg") || "{}")); } catch (e) {}
+    let BG = { gan: "", par: "" };
+    let CERT_ITEMS = [];
+    const PUESTO = { 1: "PRIMER", 2: "SEGUNDO", 3: "TERCER" };
 
-        function cargarDatosDesdeNube() {
-            if (urlGoogleAppsScript.startsWith("http")) {
-                fetch(urlGoogleAppsScript)
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data) && data.length > 0) {
-                        participantes = data;
-                        localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-                        renderTablaJurados();
-                        renderTablaAdmin();
-                    }
-                })
-                .catch(err => console.log("Cargando desde almacenamiento local:", err));
-            }
-        }
+    function renderCertSheets() {
+        $("ovHost").innerHTML = CERT_ITEMS.map(it => {
+            const t = TPL[it.tpl], font = it.tpl === "gan" ? CFG.fontG : CFG.fontP, bg = BG[it.tpl];
+            return `<div class="ct-sheet" style="--dx:${CFG.dx}mm;--dy:${CFG.dy}mm;box-shadow:0 0 0 1px #94a3b8">
+                ${bg ? `<img class="ct-bg" src="${bg}" alt="">` : ""}
+                <div class="ct-name ct-fit" data-base="${t.nameSize * CFG.esc / 100}" data-maxw="8.4" style="top:${t.nameTop}%;font-family:'${font}',cursive;color:${t.color}">${esc(titulo(it.nombre))}</div>
+                <div class="ct-line ct-fit" data-base="${t.lineSize}" data-maxw="8.6" style="top:${t.lineTop}%">${esc(it.linea)}</div>
+            </div>`;
+        }).join("");
+        const ajustar = () => $("ovHost").querySelectorAll(".ct-fit").forEach(el => {
+            el.style.fontSize = el.dataset.base + "in";
+            const max = parseFloat(el.dataset.maxw) * 96, w = el.getBoundingClientRect().width;
+            if (w > max) el.style.fontSize = (parseFloat(el.dataset.base) * max / w * 0.98) + "in";
+        });
+        ajustar();
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustar);
+    }
+    function abrirCertificados(items) {
+        if (!items.length) { toast("No hay certificados para esa selección.", "err"); return; }
+        CERT_ITEMS = items; PRINT_MODE = "cert";
+        $("ovTitulo").textContent = "Certificados (" + items.length + ") – carta horizontal";
+        $("ctFontG").innerHTML = $("ctFontP").innerHTML = FUENTES.map(f => `<option>${f}</option>`).join("");
+        $("ctFontG").value = CFG.fontG; $("ctFontP").value = CFG.fontP;
+        $("ctDx").value = CFG.dx; $("ctDy").value = CFG.dy; $("ctEsc").value = CFG.esc;
+        $("ovCertCtl").classList.remove("hidden"); $("ovAviso").classList.remove("hidden");
+        renderCertSheets(); abrirOverlay();
+    }
+    function recalcCert() {
+        CFG = { dx: +$("ctDx").value || 0, dy: +$("ctDy").value || 0, esc: +$("ctEsc").value || 100, fontG: $("ctFontG").value, fontP: $("ctFontP").value };
+        try { localStorage.setItem("om_cert_cfg", JSON.stringify(CFG)); } catch (e) {}
+        renderCertSheets();
+    }
+    function setFondo(tipo, input) {
+        const f = input.files[0];
+        BG[tipo] = f ? URL.createObjectURL(f) : "";
+        renderCertSheets();
+    }
+    const certPart = (nombre, cat, sub) => ({ nombre, linea: `PARTICIPANTE - ${cat} ${sub}`.toUpperCase(), tpl: "par" });
+    const certsDeEquipo = p => p.integrantes.map(i => certPart(i.n, p.categoria, subBase(p.subdivision)));
+    const certsDePersonal = x => ({ nombre: x.nombre, linea: (x.rol + (x.categoria ? " - " + x.categoria : "")).toUpperCase(), tpl: "par" });
+    function certEquipo(cod) { const p = D.participantes.find(x => x.codigo === cod); if (p) abrirCertificados(certsDeEquipo(p)); }
+    function certPersonal(cod) { const x = D.personal.find(y => y.codigo === cod); if (x) abrirCertificados([certsDePersonal(x)]); }
+    function certificadosMasivos() {
+        const tipo = $("certTipo").value, f = $("certCat").value;
+        let items = [];
+        if (tipo === "part") items = aprobados().filter(p => f === "TODAS" || p.categoria === f).flatMap(certsDeEquipo);
+        else if (tipo === "gan") {
+            D.ganadores.filter(g => f === "TODAS" || g.categoria === f).forEach(g => {
+                const p = D.participantes.find(x => x.codigo === g.codigo);
+                const nombres = p ? p.integrantes.map(i => i.n) : g.integrantes.split(" / ");
+                nombres.forEach(n => items.push({ nombre: n, linea: `${g.categoria} ${g.subdivision} - ${PUESTO[g.puesto]} LUGAR`.toUpperCase(), tpl: "gan" }));
+            });
+        } else items = D.personal.filter(x => f === "TODAS" || (x.categoria || "").startsWith(f)).map(certsDePersonal);
+        abrirCertificados(items);
+    }
+    function certificadosPrueba() {
+        abrirCertificados([
+            { nombre: "Random 1 Gz", linea: "LABERINTO LIBRE - PRIMER LUGAR", tpl: "gan" },
+            { nombre: "Random 1 Gz", linea: "PARTICIPANTE - LABERINTO LIBRE", tpl: "par" }
+        ]);
+    }
 
-        function verificarLoginJurado() {
-            const pass = document.getElementById('passJurado').value;
-            if(pass === "jurado2026") {
-                document.getElementById('juradoLoginBox').classList.add('hidden');
-                document.getElementById('juradoPanelContent').classList.remove('hidden');
-                cargarDatosDesdeNube();
-                renderTablaJurados();
-            } else {
-                alert("Contraseña de jurado incorrecta.");
-            }
-        }
-
-        function renderTablaJurados() {
-            const tbody = document.getElementById('tablaJuradosBody');
-            const filtro = document.getElementById('filtroJurado').value;
-            tbody.innerHTML = "";
-            participantes.forEach(p => {
-                if(filtro === "TODAS" || p.categoria === filtro) {
-                    const pagoDisplay = (p.pago && p.pago.startsWith("http")) ? 
-                        `<a href="${p.pago}" target="_blank" class="text-cyan-400 underline font-bold"><i class="fa-solid fa-file-image mr-1"></i>Ver Pago</a>` : 
-                        `<span class="text-amber-400 font-bold">${p.pago}</span>`;
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-950/50">
-                            <td class="p-2.5 font-semibold text-white">${p.nombre || 'Sin Nombre'}</td>
-                            <td class="p-2.5 font-mono text-[11px]">
-                                <div>CI: ${p.ci || '-'}</div>
-                                <div class="text-emerald-400 font-sans"><i class="fa-brands fa-whatsapp mr-1"></i>${p.celular || 'Sin Celular'}</div>
-                            </td>
-                            <td class="p-2.5 text-slate-300">${p.tutor || '-'}</td>
-                            <td class="p-2.5"><span class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded">${p.categoria || '-'} (${p.subdivision || '-'})</span></td>
-                            <td class="p-2.5 font-semibold text-amber-400">${p.equipo || '-'}</td>
-                            <td class="p-2.5 text-center">${pagoDisplay}</td>
-                        </tr>`;
+    // =====================================================================
+    //  REFRIGERIO (escáner QR + código manual)
+    // =====================================================================
+    let camStream = null, camRAF = null, ultimoQR = "", ultimoQRt = 0, procesando = false, REF = { total: 0, entregados: 0 };
+    function diaPorDefecto() {
+        const h = new Date(), f = h.getFullYear() + "-" + String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0");
+        return f === "2026-11-15" ? "Domingo 15" : "Sábado 14";
+    }
+    function pintarContador() { $("refEntregados").textContent = REF.entregados; $("refTotal").textContent = REF.total; }
+    async function cargarResumenRefri() {
+        if (!passLog()) return;
+        const r = await api({ action: "refrigerio_resumen", pass: passLog(), dia: $("refDia").value });
+        if (r.ok) { REF.total = r.total; REF.entregados = r.entregados; pintarContador(); }
+        else if (r.auth) cerrarSesion("logistica");
+    }
+    function beep(ok) {
+        try {
+            const ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain();
+            o.connect(g); g.connect(ac.destination); o.frequency.value = ok ? 880 : 220; g.gain.value = 0.15;
+            o.start(); o.stop(ac.currentTime + (ok ? 0.15 : 0.45));
+        } catch (e) {}
+    }
+    function mostrarResultado(r) {
+        const b = $("refResultado");
+        let cls, html;
+        if (r.net) { cls = "bg-slate-800 border-2 border-slate-500"; html = `<p class="text-lg font-bold text-white">Sin conexión</p><p class="text-xs text-slate-300">${esc(r.error)}</p>`; }
+        else if (r.ok) { cls = "bg-emerald-900 border-2 border-emerald-400"; html = `<p class="text-3xl">✅</p><p class="text-xl font-extrabold text-white">REFRIGERIO ENTREGADO</p>`; }
+        else if (r.estado === "REPETIDO") { cls = "bg-amber-900 border-2 border-amber-400"; html = `<p class="text-3xl">⚠️</p><p class="text-xl font-extrabold text-white">YA RECIBIÓ (${esc(r.hora || "")})</p>`; }
+        else { cls = "bg-rose-900 border-2 border-rose-400"; html = `<p class="text-3xl">⛔</p><p class="text-xl font-extrabold text-white">NO ENTREGAR</p><p class="text-xs text-rose-200">${esc(r.error || "")}</p>`; }
+        if (r.nombre) html += `<p class="text-lg text-white font-bold">${esc(r.nombre)}</p><p class="text-xs text-slate-200">${esc([r.rol, r.equipo, r.categoria].filter(Boolean).join(" · "))}</p><p class="text-[11px] font-mono text-slate-300">${esc(r.codigo || "")}</p>`;
+        b.className = "p-5 rounded-2xl text-center space-y-1 " + cls;
+        b.innerHTML = html;
+    }
+    async function registrarRefrigerio(codigo) {
+        codigo = String(codigo || "").trim();
+        if (!codigo || procesando) return;
+        procesando = true;
+        $("refCodigo").disabled = true;
+        const r = await api({ action: "refrigerio", pass: passLog(), codigo, dia: $("refDia").value });
+        procesando = false;
+        $("refCodigo").disabled = false; $("refCodigo").value = ""; $("refCodigo").focus();
+        if (r.auth) { cerrarSesion("logistica"); toast("La sesión venció. Ingresa de nuevo.", "err"); return; }
+        mostrarResultado(r); beep(!!r.ok);
+        if (r.entregados != null) { REF.entregados = r.entregados; pintarContador(); }
+        const li = document.createElement("li");
+        li.textContent = new Date().toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" }) + " · " + (r.ok ? "✔ " : "✖ ") + (r.nombre || codigo) + (r.ok ? "" : " – " + (r.estado === "REPETIDO" ? "ya recibió" : (r.error || ""))).slice(0, 80);
+        li.className = r.ok ? "text-emerald-300" : "text-rose-300";
+        const log = $("refLog"); log.insertBefore(li, log.firstChild); while (log.children.length > 15) log.removeChild(log.lastChild);
+    }
+    async function toggleCamara() {
+        if (camStream) { pararCamara(); return; }
+        try {
+            camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            const v = $("camVideo"); v.srcObject = camStream; await v.play();
+            $("camBox").classList.remove("hidden"); $("btnCam").innerHTML = '<i class="fa-solid fa-video-slash mr-1"></i> Detener cámara';
+            bucleCamara();
+        } catch (e) { camStream = null; toast("No se pudo abrir la cámara. Permite el acceso o escribe el código a mano.", "err"); }
+    }
+    function pararCamara() {
+        if (camRAF) cancelAnimationFrame(camRAF);
+        camRAF = null;
+        if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+        const b = $("camBox"); if (b) b.classList.add("hidden");
+        const bt = $("btnCam"); if (bt) bt.innerHTML = '<i class="fa-solid fa-camera mr-1"></i> Escanear con la cámara';
+    }
+    function bucleCamara() {
+        const v = $("camVideo"), cv = $("camCanvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+        let last = 0;
+        const tick = t => {
+            if (!camStream) return;
+            if (t - last > 160 && v.readyState >= 2 && typeof jsQR !== "undefined") {
+                last = t;
+                const k = Math.min(1, 640 / v.videoWidth);
+                cv.width = Math.round(v.videoWidth * k); cv.height = Math.round(v.videoHeight * k);
+                cx.drawImage(v, 0, 0, cv.width, cv.height);
+                const img = cx.getImageData(0, 0, cv.width, cv.height);
+                const c = jsQR(img.data, cv.width, cv.height, { inversionAttempts: "dontInvert" });
+                if (c && c.data) {
+                    const ahora = Date.now();
+                    if (c.data !== ultimoQR || ahora - ultimoQRt > 4000) { ultimoQR = c.data; ultimoQRt = ahora; registrarRefrigerio(c.data); }
                 }
-            });
-        }
-
-        function verificarLoginAdmin() {
-            const pass = document.getElementById('passAdmin').value;
-            if(pass === "admin2026") {
-                document.getElementById('adminLoginBox').classList.add('hidden');
-                document.getElementById('adminPanelContent').classList.remove('hidden');
-                document.getElementById('navBtnPuerta').classList.remove('hidden');
-                cargarDatosDesdeNube();
-                renderTablaAdmin();
-            } else {
-                alert("Contraseña de administrador incorrecta.");
             }
-        }
+            camRAF = requestAnimationFrame(tick);
+        };
+        camRAF = requestAnimationFrame(tick);
+    }
 
-        function renderTablaAdmin() {
-            const tbody = document.getElementById('tablaAdminBody');
-            tbody.innerHTML = "";
-            participantes.forEach((p, index) => {
-                const linkPago = (p.pago && p.pago.startsWith("http")) ? 
-                    `<a href="${p.pago}" target="_blank" class="text-cyan-400 underline font-bold block"><i class="fa-solid fa-image mr-1"></i>Comprobante Pago</a>` : 
-                    `<span class="text-slate-400">${p.pago || 'Pendiente'}</span>`;
-
-                const linkFni = (p.documentoFni && p.documentoFni.startsWith("http")) ? 
-                    `<a href="${p.documentoFni}" target="_blank" class="text-emerald-400 underline font-bold block mt-1"><i class="fa-solid fa-id-card mr-1"></i>Doc FNI</a>` : 
-                    `<span class="text-slate-500 text-[10px] block mt-1">${p.documentoFni || 'Sin FNI'}</span>`;
-
-                const badgeEstado = (p.pago && p.pago.includes("Aprobado")) ? 
-                    `<span class="bg-emerald-950 text-emerald-400 px-2 py-1 rounded text-[10px] font-bold border border-emerald-600">Aprobado</span>` :
-                    `<span class="bg-amber-950 text-amber-400 px-2 py-1 rounded text-[10px] font-bold border border-amber-600">${p.pago || 'Pendiente'}</span>`;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-950/50">
-                        <td class="p-2.5 font-semibold text-white">${p.nombre || 'Sin Nombre'}</td>
-                        <td class="p-2.5 font-mono text-[11px]">${p.ci || '-'}</td>
-                        <td class="p-2.5 font-sans text-emerald-400 font-semibold">${p.celular || '-'}</td>
-                        <td class="p-2.5 text-slate-300">${p.tutor || '-'}</td>
-                        <td class="p-2.5">${p.categoria || '-'} (${p.subdivision || '-'})</td>
-                        <td class="p-2.5 font-semibold text-cyan-400">${p.equipo || '-'}</td>
-                        <td class="p-2.5 text-center">${linkPago}${linkFni}</td>
-                        <td class="p-2.5 text-center space-y-1">
-                            ${badgeEstado}
-                            <button onclick="cambiarEstadoAprobacion(${index})" class="px-2 py-0.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-[9px] block mx-auto mt-1">Cambiar Estado</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function cambiarEstadoAprobacion(index) {
-            const opciones = prompt("Selecciona el estado:\n1. Pagado (Aprobado)\n2. En Revisión\n3. Rechazado", "Pagado (Aprobado)");
-            if (opciones !== null) {
-                participantes[index].pago = opciones;
-                localStorage.setItem('om_encuentro_2026', JSON.stringify(participantes));
-                enviarANubeSiExiste(participantes[index]);
-                renderTablaAdmin();
-            }
-        }
-
-        function exportarCSV() {
-            let csv = "Nombres,CI,Celular,Tutor,Categoria,Subdivision,Equipo,Pago/Comprobante,Tipo,DocumentoFNI\n";
-            participantes.forEach(p => {
-                csv += `"${p.nombre}","${p.ci}","${p.celular || ''}","${p.tutor}","${p.categoria}","${p.subdivision}","${p.equipo}","${p.pago}","${p.tipo}","${p.documentoFni || ''}"\n`;
-            });
-            let blob = new Blob([csv], { type: 'text/csv' });
-            let link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = "participantes_club_oruro_mecatronico.csv";
-            link.click();
-        }
-
-        function initCanvasBackground() {
-            const canvas = document.getElementById('bgCanvas');
-            const ctx = canvas.getContext('2d');
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
-            const nodes = Array.from({ length: 30 }, () => ({
-                x: Math.random() * width, y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5
-            }));
-            function animate() {
+    // =====================================================================
+    //  FONDO ANIMADO
+    // =====================================================================
+    function initCanvasBackground() {
+        if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const canvas = $("bgCanvas"), ctx = canvas.getContext("2d");
+        let width = canvas.width = innerWidth, height = canvas.height = innerHeight;
+        addEventListener("resize", () => { width = canvas.width = innerWidth; height = canvas.height = innerHeight; });
+        const nodes = Array.from({ length: 30 }, () => ({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5 }));
+        (function animate() {
+            if (!document.hidden) {
                 ctx.clearRect(0, 0, width, height);
-                ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.08)';
-                nodes.forEach((node, i) => {
-                    node.x += node.vx; node.y += node.vy;
-                    if (node.x < 0 || node.x > width) node.vx *= -1;
-                    if (node.y < 0 || node.y > height) node.vy *= -1;
-                    ctx.beginPath(); ctx.arc(node.x, node.y, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "rgba(6,182,212,0.3)"; ctx.strokeStyle = "rgba(6,182,212,0.08)";
+                nodes.forEach((n, i) => {
+                    n.x += n.vx; n.y += n.vy;
+                    if (n.x < 0 || n.x > width) n.vx *= -1;
+                    if (n.y < 0 || n.y > height) n.vy *= -1;
+                    ctx.beginPath(); ctx.arc(n.x, n.y, 2, 0, Math.PI * 2); ctx.fill();
                     for (let j = i + 1; j < nodes.length; j++) {
-                        const dx = nodes[j].x - node.x, dy = nodes[j].y - node.y;
-                        if (Math.sqrt(dx * dx + dy * dy) < 150) {
-                            ctx.beginPath(); ctx.moveTo(node.x, node.y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
-                        }
+                        const dx = nodes[j].x - n.x, dy = nodes[j].y - n.y;
+                        if (dx * dx + dy * dy < 22500) { ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke(); }
                     }
                 });
-                requestAnimationFrame(animate);
             }
-            animate();
-        }
+            requestAnimationFrame(animate);
+        })();
+    }
+
+    // =====================================================================
+    //  ARRANQUE
+    // =====================================================================
+    document.addEventListener("DOMContentLoaded", async () => {
+        try { localStorage.removeItem("om_encuentro_2026"); } catch (e) {} // la versión anterior guardaba datos personales en el navegador
+        if (typeof qrcode === "undefined") cargarLib("https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js");
+        if (typeof jsQR === "undefined") cargarLib("https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js");
+
+        // Reglamentos (17 PDF)
+        $("listaReglamentos").innerHTML = CATEGORIAS.flatMap(c => c.subs.map((s, i) => ({ c, s, f: c.pdf[i] }))).map((x, i) => `
+            <a href="${esc(x.f)}" target="_blank" rel="noopener" class="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 flex justify-between items-center transition">
+                <span><i class="fa-solid fa-file-pdf text-cyan-400 mr-2"></i> ${i + 1}. ${esc(x.c.n)} (${x.s})</span>
+                <span class="text-cyan-400 font-mono text-[10px] bg-cyan-950 px-2 py-1 rounded">PDF <i class="fa-solid fa-external-link-alt ml-1"></i></span>
+            </a>`).join("");
+
+        // Selectores
+        const optsTodas = `<option value="TODAS">Todas las categorías</option>` + CATEGORIAS.map(c => `<option value="${esc(c.n)}">${esc(c.n)}</option>`).join("");
+        ["filtroJurado", "admFiltroCat", "credCat", "certCat"].forEach(id => $(id).innerHTML = optsTodas);
+        $("perCat").innerHTML = `<option value="">—</option>` + COMBOS.map(c => `<option value="${esc(c.texto)}">${esc(c.texto)}</option>`).join("");
+        $("refDia").value = diaPorDefecto();
+
+        $("formWeb").innerHTML = formHTML("w", false); initForm("w");
+        $("formPuerta").innerHTML = formHTML("p", true); initForm("p");
+
+        initCanvasBackground();
+        syncUI();
+        cargarGanadoresPublicos();
+        if (SES.admin || SES.jurado) { await cargarDatos(false); syncUI(); }
+        if (passLog()) cargarResumenRefri();
+    });
     </script>
 </body>
 </html>
