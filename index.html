@@ -25,20 +25,25 @@
             html, body { background: #fff !important; margin: 0; padding: 0; }
         }
 
-        /* Credenciales: 54 x 86 mm, 9 por hoja carta */
-        .cr-sheet { width: 216mm; height: 279mm; display: grid; grid-template-columns: repeat(3, 54mm); grid-auto-rows: 86mm; justify-content: center; align-content: center; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
+        /* Credenciales: 100 x 65 mm (horizontal), 8 por hoja carta; una sola = página de 100 x 65 mm */
+        .cr-sheet { width: 216mm; height: 279mm; display: grid; grid-template-columns: repeat(2, 100mm); grid-auto-rows: 65mm; justify-content: center; align-content: center; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
         .cr-sheet:last-child { break-after: auto; page-break-after: auto; }
-        .cr-card { width: 54mm; height: 86mm; box-sizing: border-box; border: 0.25mm dashed #9ca3af; display: flex; flex-direction: column; align-items: center; text-align: center; font-family: Arial, Helvetica, sans-serif; color: #0f172a; overflow: hidden; background: #fff; }
-        .cr-top { width: 100%; height: 12mm; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; gap: 1.5mm; font-size: 5pt; font-weight: 700; line-height: 1.15; letter-spacing: .2pt; }
-        .cr-logo { width: 9mm; height: 9mm; object-fit: contain; background: #fff; border-radius: 1mm; }
-        .cr-rol { width: 100%; height: 6mm; line-height: 6mm; color: #fff; font-weight: 800; font-size: 8.5pt; letter-spacing: 1pt; }
-        .cr-name { height: 14mm; width: 50mm; display: flex; align-items: center; justify-content: center; font-weight: 800; line-height: 1.1; word-break: break-word; }
-        .cr-eq { font-size: 8pt; font-weight: 700; color: #0e7490; max-width: 50mm; line-height: 1.1; max-height: 5mm; overflow: hidden; }
-        .cr-cat { font-size: 6.5pt; color: #334155; max-width: 50mm; margin-top: .8mm; line-height: 1.15; min-height: 7mm; }
-        .cr-qr { width: 23mm; height: 23mm; }
+        .cr-sheet.uno { width: 100mm; height: 65mm; display: block; }
+        .cr-sheet.uno .cr-card { border: none; }
+        .cr-card { width: 100mm; height: 65mm; box-sizing: border-box; border: 0.25mm dashed #9ca3af; display: flex; flex-direction: column; font-family: Arial, Helvetica, sans-serif; color: #0f172a; overflow: hidden; background: #fff; }
+        .cr-top { height: 12mm; flex: none; background: #0f172a; color: #fff; display: flex; align-items: center; gap: 2.5mm; padding: 0 3mm; font-size: 7pt; font-weight: 700; line-height: 1.2; letter-spacing: .3pt; text-align: left; }
+        .cr-logo { width: 9mm; height: 9mm; object-fit: contain; background: #fff; border-radius: 1mm; flex: none; }
+        .cr-main { flex: 1; display: flex; min-height: 0; }
+        .cr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 2mm 2mm 2mm 4mm; text-align: left; gap: 1.6mm; }
+        .cr-rol { color: #fff; font-weight: 800; font-size: 8pt; letter-spacing: 1pt; padding: .8mm 3mm; border-radius: 1mm; }
+        .cr-name { font-weight: 800; line-height: 1.1; word-break: break-word; }
+        .cr-eq { font-size: 8pt; font-weight: 700; color: #0e7490; line-height: 1.1; }
+        .cr-cat { font-size: 6.5pt; color: #334155; line-height: 1.15; }
+        .cr-side { width: 34mm; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-right: 3mm; }
+        .cr-qr { width: 29mm; height: 29mm; }
         .cr-qr svg { width: 100%; height: 100%; display: block; }
-        .cr-cod { font-family: 'Courier New', monospace; font-weight: 700; font-size: 8pt; margin-top: .6mm; }
-        .cr-ref { margin-top: auto; margin-bottom: 1.2mm; font-size: 5pt; color: #475569; }
+        .cr-cod { font-family: 'Courier New', monospace; font-weight: 700; font-size: 8pt; margin-top: .8mm; }
+        .cr-ref { height: 6mm; flex: none; display: flex; align-items: center; justify-content: center; border-top: .25mm solid #cbd5e1; font-size: 6.5pt; color: #475569; }
 
         /* Certificados: carta horizontal, solo se imprime el texto variable */
         .ct-sheet { position: relative; width: 11in; height: 8.49in; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
@@ -257,8 +262,7 @@
                     <input type="text" id="refCodigo" placeholder="Escanea el QR o escribe la C.I. (ej. 7380378)" autocomplete="off" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-sm font-mono" onkeydown="if(event.key==='Enter'){registrarRefrigerio(this.value);}">
                     <button onclick="registrarRefrigerio($('refCodigo').value)" class="px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm">Registrar</button>
                 </div>
-                <button id="btnCam" onclick="toggleCamara()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-xs font-bold"><i class="fa-solid fa-camera mr-1"></i> Escanear con la cámara</button>
-                <div id="camBox" class="hidden"><video id="camVideo" playsinline muted class="w-full rounded-xl bg-black max-h-72 object-cover"></video><canvas id="camCanvas" class="hidden"></canvas></div>
+                <button id="btnCam" onclick="toggleCamara()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold"><i class="fa-solid fa-camera mr-2"></i> Abrir cámara (pantalla completa)</button>
 
                 <div id="refResultado" class="hidden p-5 rounded-2xl text-center space-y-1"></div>
 
@@ -419,6 +423,7 @@
                                 <option value="part">Participación (aprobados pendientes)</option>
                                 <option value="gan">Ganadores (pendientes)</option>
                                 <option value="pers">Jurados y personal (pendientes)</option>
+                                <option value="tut">Tutores (pendientes, uno por tutor)</option>
                             </select>
                             <select id="certCat" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-xs text-white"></select>
                             <div class="flex flex-wrap gap-2">
@@ -435,6 +440,13 @@
                     <h2 class="text-xl font-bold text-amber-400"><i class="fa-solid fa-trophy mr-2"></i>Certificados de Ganadores</h2>
                     <p class="text-[11px] text-slate-400">Imprime el certificado de cada integrante por separado y marca cuáles ya se imprimieron.</p>
                     <div id="ganAdminList" class="grid md:grid-cols-2 gap-3"></div>
+                </div>
+
+                <!-- Certificados de tutores -->
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-emerald-500/40 space-y-3">
+                    <h2 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-chalkboard-user mr-2"></i>Certificados de Tutores</h2>
+                    <p class="text-[11px] text-slate-400">Un solo certificado por tutor aunque tenga varios equipos (se agrupan por nombre, ignorando mayúsculas, tildes y títulos como Ing. o Lic.). Solo de equipos aprobados.</p>
+                    <div id="tutAdminList" class="grid md:grid-cols-2 gap-2"></div>
                 </div>
             </div>
         </section>
@@ -468,6 +480,21 @@
         </div>
         <p id="ovAviso" class="hidden text-[11px] text-amber-300 px-4 pt-2">La plantilla de fondo es solo para comprobar la posición en pantalla: no se imprime.</p>
         <div id="ovHost" class="p-4 flex flex-col items-center gap-4 bg-slate-800"></div>
+    </div>
+
+    <!-- Escáner de refrigerio a pantalla completa -->
+    <div id="scanOverlay" class="hidden fixed inset-0 z-[90] bg-black flex flex-col">
+        <div class="flex items-center justify-between gap-2 px-3 py-2 bg-slate-900 text-white">
+            <div class="text-sm"><span class="text-slate-400 text-xs">Entregados</span> <strong id="scanEnt" class="text-emerald-400 text-xl">0</strong><span class="text-slate-500"> / </span><strong id="scanTot">0</strong> <span id="scanDia" class="text-xs text-slate-400 ml-2"></span></div>
+            <button onclick="pararCamara()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 rounded-lg text-xs font-bold">Cerrar cámara</button>
+        </div>
+        <div class="relative flex-1 min-h-0">
+            <video id="camVideo" playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
+            <canvas id="camCanvas" class="hidden"></canvas>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-64 h-64 max-w-[70vw] max-h-[70vw] border-4 border-white/70 rounded-3xl"></div></div>
+            <p id="scanAyuda" class="absolute top-3 inset-x-0 text-center text-white text-sm font-semibold drop-shadow">Apunta al QR de la credencial</p>
+            <div id="scanRes" class="hidden absolute inset-x-0 bottom-0 p-6 pb-8 text-center space-y-1 rounded-t-3xl shadow-2xl"></div>
+        </div>
     </div>
 
     <style id="pageStyle"></style>
@@ -981,6 +1008,29 @@
                 }).join("")}
             </div>`).join("") || `<p class="text-xs text-slate-500">Todavía no hay ganadores publicados.</p>`;
     }
+    // ---- Tutores (uno por persona) ----
+    const normTutor = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ")
+        .replace(/\b(ing|lic|dr|dra|msc|mgr|prof|tec|univ|sr|sra|arq|phd)\b/g, " ").replace(/\s+/g, " ").trim();
+    function tutoresDe(equipos) {
+        const m = new Map();
+        equipos.forEach(p => {
+            const k = normTutor(p.tutor); if (!k) return;
+            if (!m.has(k)) m.set(k, { key: k, nombre: String(p.tutor).trim(), equipos: [], cats: [] });
+            const t = m.get(k); t.equipos.push(p.equipo); if (!t.cats.includes(p.categoria)) t.cats.push(p.categoria);
+        });
+        return [...m.values()].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }
+    const certTutorItem = t => ({ nombre: t.nombre, linea: "TUTOR / ASESOR", tpl: "par", key: "TUT|" + t.key });
+    function certTutor(key) { const t = tutoresDe(aprobados()).find(x => x.key === key); if (t) abrirCertificados([certTutorItem(t)]); }
+    function renderTutores() {
+        const box = $("tutAdminList"); if (!box) return;
+        box.innerHTML = tutoresDe(aprobados()).map(t => `
+            <div class="bg-slate-950 rounded-xl border border-slate-800 p-3 flex items-center gap-2 text-xs">
+                <div class="flex-1 min-w-0"><p class="text-white font-semibold">${esc(t.nombre)}</p><p class="text-[10px] text-slate-500">${t.equipos.length} equipo${t.equipos.length > 1 ? "s" : ""}: ${esc(t.equipos.join(", "))}</p></div>
+                <button onclick="certTutor('${esc(t.key)}')" class="px-2 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-[10px]">Certificado</button>
+                <label class="flex items-center gap-1 text-slate-400 text-[10px]">${chkImpreso("TUT|" + t.key)} impreso</label>
+            </div>`).join("") || `<p class="text-xs text-slate-500">Aún no hay tutores en equipos aprobados.</p>`;
+    }
     function renderPersonal() {
         $("tablaPersonalBody").innerHTML = D.personal.map(x => {
             const c = esc(x.codigo), kc = "P|" + x.codigo, kp = "PERS|" + x.codigo;
@@ -1001,7 +1051,7 @@
         D.personal = r.personal; $("perNombre").value = ""; $("perCi").value = ""; $("perRolOtro").value = ""; renderAll(); toast("Agregado.");
     }
     function renderAll() {
-        renderStats(); renderAdmin(); renderJurados(); renderPersonal(); renderGanAdmin();
+        renderStats(); renderAdmin(); renderJurados(); renderPersonal(); renderGanAdmin(); renderTutores();
         $("colaN").textContent = personasDe(aprobados()).filter(x => !yaImpreso(keyCred(x.ci))).length;
     }
     function exportarCSV() {
@@ -1028,7 +1078,7 @@
         pa.innerHTML = $("ovHost").innerHTML;
         pa.querySelectorAll(".ct-bg").forEach(e => e.remove());
         pa.querySelectorAll(".ct-sheet").forEach(e => e.style.boxShadow = "none");
-        $("pageStyle").textContent = PRINT_MODE === "cert" ? "@page{size:letter landscape;margin:0}" : "@page{size:letter portrait;margin:0}";
+        $("pageStyle").textContent = PRINT_MODE === "cert" ? "@page{size:letter landscape;margin:0}" : ($("ovHost").querySelector(".cr-sheet.uno") ? "@page{size:100mm 65mm;margin:0}" : "@page{size:letter portrait;margin:0}");
         setTimeout(() => window.print(), 200);
     }
     window.addEventListener("afterprint", () => {
@@ -1051,22 +1101,26 @@
     const ROL_COLOR = { "COMPETIDOR": "#0e7490", "JURADO": "#4338ca", "LOGÍSTICA": "#047857", "ORGANIZADOR": "#be123c" };
     function cardHTML(c) {
         const nombre = String(c.nombre).toUpperCase();
-        const fs = nombre.length <= 18 ? 11 : nombre.length <= 28 ? 9 : 7.5;
+        const fs = nombre.length <= 18 ? 13 : nombre.length <= 28 ? 11 : 9;
         const cat = c.cat ? c.cat + (c.sub ? " · " + c.sub : "") : "";
         return `<div class="cr-card">
-            <div class="cr-top"><img src="logo.jpg" class="cr-logo" alt=""><div>IV ENCUENTRO TECNOLÓGICO<br>MECATRÓNICO 2026</div></div>
-            <div class="cr-rol" style="background:${ROL_COLOR[c.rol] || "#334155"}">${esc(c.rol)}</div>
-            <div class="cr-name" style="font-size:${fs}pt">${esc(nombre)}</div>
-            ${c.equipo ? `<div class="cr-eq">${esc(c.equipo)}</div>` : ""}
-            <div class="cr-cat">${esc(cat)}</div>
-            <div class="cr-qr">${qrSVG(c.codigo)}</div>
-            <div class="cr-cod">${esc(c.codigo)}</div>
+            <div class="cr-top"><img src="logo.jpg" class="cr-logo" alt=""><div>IV ENCUENTRO TECNOLÓGICO MECATRÓNICO 2026<br><span style="font-weight:400">Club Oruro Mecatrónico</span></div></div>
+            <div class="cr-main">
+                <div class="cr-info">
+                    <div class="cr-rol" style="background:${ROL_COLOR[c.rol] || "#334155"}">${esc(c.rol)}</div>
+                    <div class="cr-name" style="font-size:${fs}pt">${esc(nombre)}</div>
+                    ${c.equipo ? `<div class="cr-eq">${esc(c.equipo)}</div>` : ""}
+                    ${cat ? `<div class="cr-cat">${esc(cat)}</div>` : ""}
+                </div>
+                <div class="cr-side"><div class="cr-qr">${qrSVG(c.qr || c.codigo)}</div><div class="cr-cod">${esc(c.codigo)}</div></div>
+            </div>
             <div class="cr-ref">REFRIGERIO &nbsp;☐ SÁB 14 &nbsp;☐ DOM 15</div>
         </div>`;
     }
     function sheetsCred(items) {
+        if (items.length === 1) return `<div class="cr-sheet uno">${cardHTML(items[0])}</div>`;
         let h = "";
-        for (let i = 0; i < items.length; i += 9) h += `<div class="cr-sheet">${items.slice(i, i + 9).map(cardHTML).join("")}</div>`;
+        for (let i = 0; i < items.length; i += 8) h += `<div class="cr-sheet">${items.slice(i, i + 8).map(cardHTML).join("")}</div>`;
         return h;
     }
     const credPersona = pe => ({ key: keyCred(pe.ci), codigo: "CI-" + pe.ci, nombre: pe.nombre, equipo: "", cat: "", sub: "", rol: "COMPETIDOR" });
@@ -1075,7 +1129,7 @@
         if (!items.length) { toast("No hay credenciales para imprimir.", "err"); return; }
         PRINT_MODE = "cred";
         PRINT_KEYS = items.map(i => i.key).filter(Boolean);
-        $("ovTitulo").textContent = "Credenciales (" + items.length + ") – 9 por hoja carta";
+        $("ovTitulo").textContent = "Credenciales (" + items.length + ") – " + (items.length === 1 ? "una sola, página de 100 x 65 mm" : "8 por hoja carta (100 x 65 mm)");
         $("ovCertCtl").classList.add("hidden"); $("ovAviso").classList.add("hidden");
         $("ovHost").innerHTML = sheetsCred(items);
         if (auto) imprimirAhora(); else abrirOverlay();
@@ -1173,7 +1227,8 @@
                 const ints = p ? p.integrantes : String(g.integrantes).split(" / ").map(n => ({ n, ci: "" }));
                 ints.forEach(i => items.push(certGan(g, i.n, normCI(i.ci))));
             });
-        } else items = D.personal.filter(x => f === "TODAS" || (x.categoria || "").startsWith(f)).map(certsDePersonal);
+        } else if (tipo === "tut") items = tutoresDe(aprobados().filter(p => f === "TODAS" || p.categoria === f)).map(certTutorItem);
+        else items = D.personal.filter(x => f === "TODAS" || (x.categoria || "").startsWith(f)).map(certsDePersonal);
         abrirCertificados(items.filter(it => !it.key || !yaImpreso(it.key)));
     }
     function certificadosPrueba() {
@@ -1191,7 +1246,7 @@
         const h = new Date(), f = h.getFullYear() + "-" + String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0");
         return f === "2026-11-15" ? "Domingo 15" : "Sábado 14";
     }
-    function pintarContador() { $("refEntregados").textContent = REF.entregados; $("refTotal").textContent = REF.total; }
+    function pintarContador() { $("refEntregados").textContent = REF.entregados; $("refTotal").textContent = REF.total; $("scanEnt").textContent = REF.entregados; $("scanTot").textContent = REF.total; }
     async function cargarResumenRefri() {
         if (!passLog()) return;
         const r = await api({ action: "refrigerio_resumen", pass: passLog(), dia: $("refDia").value });
@@ -1204,17 +1259,27 @@
             o.connect(g); g.connect(ac.destination); o.frequency.value = ok ? 880 : 220; g.gain.value = 0.15;
             o.start(); o.stop(ac.currentTime + (ok ? 0.15 : 0.45));
         } catch (e) {}
+        try { if (navigator.vibrate) navigator.vibrate(ok ? 120 : [200, 100, 200]); } catch (e) {}
     }
+    let scanT;
     function mostrarResultado(r) {
+        let cls, solid, html;
+        if (r.net) { cls = "bg-slate-800 border-2 border-slate-500"; solid = "bg-slate-700"; html = `<p class="text-3xl">📡</p><p class="text-2xl font-extrabold text-white">Sin conexión</p><p class="text-sm text-slate-200">${esc(r.error)}</p>`; }
+        else if (r.ok) { cls = "bg-emerald-900 border-2 border-emerald-400"; solid = "bg-emerald-600"; html = `<p class="text-5xl">✅</p><p class="text-2xl font-extrabold text-white">APROBADO · ENTREGAR REFRIGERIO</p>`; }
+        else if (r.estado === "REPETIDO") { cls = "bg-amber-900 border-2 border-amber-400"; solid = "bg-amber-600"; html = `<p class="text-5xl">⚠️</p><p class="text-2xl font-extrabold text-white">YA RECIBIÓ (${esc(r.hora || "")})</p>`; }
+        else { cls = "bg-rose-900 border-2 border-rose-400"; solid = "bg-rose-600"; html = `<p class="text-5xl">⛔</p><p class="text-2xl font-extrabold text-white">NO ENTREGAR</p><p class="text-sm text-rose-100">${esc(r.error || "")}</p>`; }
+        if (r.nombre) html += `<p class="text-xl text-white font-bold">${esc(r.nombre)}</p><p class="text-sm text-slate-100">${esc([r.rol, r.equipo, r.categoria].filter(Boolean).join(" · "))}</p><p class="text-xs font-mono text-slate-200">${esc(r.codigo || "")}</p>`;
         const b = $("refResultado");
-        let cls, html;
-        if (r.net) { cls = "bg-slate-800 border-2 border-slate-500"; html = `<p class="text-lg font-bold text-white">Sin conexión</p><p class="text-xs text-slate-300">${esc(r.error)}</p>`; }
-        else if (r.ok) { cls = "bg-emerald-900 border-2 border-emerald-400"; html = `<p class="text-3xl">✅</p><p class="text-xl font-extrabold text-white">REFRIGERIO ENTREGADO</p>`; }
-        else if (r.estado === "REPETIDO") { cls = "bg-amber-900 border-2 border-amber-400"; html = `<p class="text-3xl">⚠️</p><p class="text-xl font-extrabold text-white">YA RECIBIÓ (${esc(r.hora || "")})</p>`; }
-        else { cls = "bg-rose-900 border-2 border-rose-400"; html = `<p class="text-3xl">⛔</p><p class="text-xl font-extrabold text-white">NO ENTREGAR</p><p class="text-xs text-rose-200">${esc(r.error || "")}</p>`; }
-        if (r.nombre) html += `<p class="text-lg text-white font-bold">${esc(r.nombre)}</p><p class="text-xs text-slate-200">${esc([r.rol, r.equipo, r.categoria].filter(Boolean).join(" · "))}</p><p class="text-[11px] font-mono text-slate-300">${esc(r.codigo || "")}</p>`;
         b.className = "p-5 rounded-2xl text-center space-y-1 " + cls;
         b.innerHTML = html;
+        if (camStream) {
+            const so = $("scanRes");
+            so.className = "absolute inset-x-0 bottom-0 p-6 pb-8 text-center space-y-1 rounded-t-3xl shadow-2xl " + solid;
+            so.innerHTML = html;
+            $("scanAyuda").classList.add("hidden");
+            clearTimeout(scanT);
+            scanT = setTimeout(() => { so.classList.add("hidden"); $("scanAyuda").classList.remove("hidden"); }, 5000);
+        }
     }
     async function registrarRefrigerio(codigo) {
         codigo = String(codigo || "").trim();
@@ -1223,7 +1288,7 @@
         $("refCodigo").disabled = true;
         const r = await api({ action: "refrigerio", pass: passLog(), codigo, dia: $("refDia").value });
         procesando = false;
-        $("refCodigo").disabled = false; $("refCodigo").value = ""; $("refCodigo").focus();
+        $("refCodigo").disabled = false; $("refCodigo").value = ""; if (!camStream) $("refCodigo").focus();
         if (r.auth) { cerrarSesion("logistica"); toast("La sesión venció. Ingresa de nuevo.", "err"); return; }
         mostrarResultado(r); beep(!!r.ok);
         if (r.entregados != null) { REF.entregados = r.entregados; pintarContador(); }
@@ -1235,18 +1300,21 @@
     async function toggleCamara() {
         if (camStream) { pararCamara(); return; }
         try {
-            camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } });
+            $("scanDia").textContent = $("refDia").value;
+            pintarContador();
+            $("scanRes").classList.add("hidden"); $("scanAyuda").classList.remove("hidden");
+            $("scanOverlay").classList.remove("hidden"); document.body.style.overflow = "hidden";
             const v = $("camVideo"); v.srcObject = camStream; await v.play();
-            $("camBox").classList.remove("hidden"); $("btnCam").innerHTML = '<i class="fa-solid fa-video-slash mr-1"></i> Detener cámara';
             bucleCamara();
-        } catch (e) { camStream = null; toast("No se pudo abrir la cámara. Permite el acceso o escribe el código a mano.", "err"); }
+        } catch (e) { pararCamara(); toast("No se pudo abrir la cámara. Permite el acceso o escribe el código a mano.", "err"); }
     }
     function pararCamara() {
         if (camRAF) cancelAnimationFrame(camRAF);
         camRAF = null;
         if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-        const b = $("camBox"); if (b) b.classList.add("hidden");
-        const bt = $("btnCam"); if (bt) bt.innerHTML = '<i class="fa-solid fa-camera mr-1"></i> Escanear con la cámara';
+        const o = $("scanOverlay"); if (o) o.classList.add("hidden");
+        if (!$("overlay") || $("overlay").classList.contains("hidden")) document.body.style.overflow = "";
     }
     function bucleCamara() {
         const v = $("camVideo"), cv = $("camCanvas"), cx = cv.getContext("2d", { willReadFrequently: true });
@@ -1262,7 +1330,7 @@
                 const c = jsQR(img.data, cv.width, cv.height, { inversionAttempts: "dontInvert" });
                 if (c && c.data) {
                     const ahora = Date.now();
-                    if (c.data !== ultimoQR || ahora - ultimoQRt > 4000) { ultimoQR = c.data; ultimoQRt = ahora; registrarRefrigerio(c.data); }
+                    if (c.data !== ultimoQR || ahora - ultimoQRt > 6000) { ultimoQR = c.data; ultimoQRt = ahora; registrarRefrigerio(c.data); }
                 }
             }
             camRAF = requestAnimationFrame(tick);
