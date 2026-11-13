@@ -910,7 +910,8 @@
         return `<span class="${c} px-2 py-1 rounded text-[10px] font-bold border">${esc(e)}</span>`;
     };
     // ---- Claves de impresión (se guardan en la hoja "Impresos") ----
-    const normCI = s => String(s == null ? "" : s).toUpperCase().replace(/[^A-Z0-9]/g, "");
+    // Clave de persona: primer bloque de dígitos de la C.I. ("7380378 OR" y "7380378" = misma persona)
+    const normCI = s => { s = String(s == null ? "" : s).toUpperCase(); const m = /\d+/.exec(s); return m ? m[0].replace(/^0+(?=\d)/, "") : s.replace(/[^A-Z0-9]/g, ""); };
     const yaImpreso = k => D.impresos.has(k);
     const keyCred = ci => "C|" + ci;
     const keyCertPart = (ci, cat, sub) => ["PART", normCI(ci), cat, sub].join("|");
