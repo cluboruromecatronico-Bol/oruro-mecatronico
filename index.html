@@ -25,25 +25,22 @@
             html, body { background: #fff !important; margin: 0; padding: 0; }
         }
 
-        /* Credenciales: 100 x 65 mm (horizontal), 8 por hoja carta; una sola = página de 100 x 65 mm */
-        .cr-sheet { width: 216mm; height: 279mm; display: grid; grid-template-columns: repeat(2, 100mm); grid-auto-rows: 65mm; justify-content: center; align-content: center; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
+        /* Credenciales: 65 x 100 mm (vertical), 6 por hoja carta; una sola = página de 65 x 100 mm */
+        .cr-sheet { width: 216mm; height: 279mm; display: grid; grid-template-columns: repeat(3, 65mm); grid-auto-rows: 100mm; justify-content: center; align-content: center; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
         .cr-sheet:last-child { break-after: auto; page-break-after: auto; }
-        .cr-sheet.uno { width: 100mm; height: 65mm; display: block; }
+        .cr-sheet.uno { width: 65mm; height: 100mm; display: block; }
         .cr-sheet.uno .cr-card { border: none; }
-        .cr-card { width: 100mm; height: 65mm; box-sizing: border-box; border: 0.25mm dashed #9ca3af; display: flex; flex-direction: column; font-family: Arial, Helvetica, sans-serif; color: #0f172a; overflow: hidden; background: #fff; }
-        .cr-top { height: 12mm; flex: none; background: #0f172a; color: #fff; display: flex; align-items: center; gap: 2.5mm; padding: 0 3mm; font-size: 7pt; font-weight: 700; line-height: 1.2; letter-spacing: .3pt; text-align: left; }
-        .cr-logo { width: 9mm; height: 9mm; object-fit: contain; background: #fff; border-radius: 1mm; flex: none; }
-        .cr-main { flex: 1; display: flex; min-height: 0; }
-        .cr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 2mm 2mm 2mm 4mm; text-align: left; gap: 1.6mm; }
-        .cr-rol { color: #fff; font-weight: 800; font-size: 8pt; letter-spacing: 1pt; padding: .8mm 3mm; border-radius: 1mm; }
-        .cr-name { font-weight: 800; line-height: 1.1; word-break: break-word; }
-        .cr-eq { font-size: 8pt; font-weight: 700; color: #0e7490; line-height: 1.1; }
-        .cr-cat { font-size: 6.5pt; color: #334155; line-height: 1.15; }
-        .cr-side { width: 34mm; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-right: 3mm; }
-        .cr-qr { width: 29mm; height: 29mm; }
+        .cr-card { width: 65mm; height: 100mm; box-sizing: border-box; border: 0.25mm dashed #9ca3af; display: flex; flex-direction: column; align-items: center; text-align: center; font-family: Arial, Helvetica, sans-serif; color: #0f172a; overflow: hidden; background: #fff; }
+        .cr-top { width: 100%; height: 15mm; flex: none; background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; gap: 2mm; font-size: 6.5pt; font-weight: 700; line-height: 1.2; letter-spacing: .3pt; }
+        .cr-logo { width: 11mm; height: 11mm; object-fit: contain; background: #fff; border-radius: 1mm; flex: none; }
+        .cr-rol { width: 100%; height: 7mm; line-height: 7mm; flex: none; color: #fff; font-weight: 800; font-size: 9pt; letter-spacing: 1.2pt; }
+        .cr-name { height: 20mm; width: 58mm; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 800; line-height: 1.1; word-break: break-word; }
+        .cr-eq { font-size: 8pt; font-weight: 700; color: #0e7490; max-width: 58mm; line-height: 1.1; }
+        .cr-cat { font-size: 6.5pt; color: #334155; max-width: 58mm; line-height: 1.15; }
+        .cr-qr { width: 34mm; height: 34mm; flex: none; margin-top: auto; }
         .cr-qr svg { width: 100%; height: 100%; display: block; }
-        .cr-cod { font-family: 'Courier New', monospace; font-weight: 700; font-size: 8pt; margin-top: .8mm; }
-        .cr-ref { height: 6mm; flex: none; display: flex; align-items: center; justify-content: center; border-top: .25mm solid #cbd5e1; font-size: 6.5pt; color: #475569; }
+        .cr-cod { font-family: 'Courier New', monospace; font-weight: 700; font-size: 9pt; margin-top: .8mm; }
+        .cr-ref { margin-top: auto; margin-bottom: 2mm; padding-top: 1.5mm; font-size: 6pt; color: #475569; }
 
         /* Certificados: carta horizontal, solo se imprime el texto variable */
         .ct-sheet { position: relative; width: 11in; height: 8.49in; background: #fff; overflow: hidden; break-after: page; page-break-after: always; }
@@ -1078,7 +1075,7 @@
         pa.innerHTML = $("ovHost").innerHTML;
         pa.querySelectorAll(".ct-bg").forEach(e => e.remove());
         pa.querySelectorAll(".ct-sheet").forEach(e => e.style.boxShadow = "none");
-        $("pageStyle").textContent = PRINT_MODE === "cert" ? "@page{size:letter landscape;margin:0}" : ($("ovHost").querySelector(".cr-sheet.uno") ? "@page{size:100mm 65mm;margin:0}" : "@page{size:letter portrait;margin:0}");
+        $("pageStyle").textContent = PRINT_MODE === "cert" ? "@page{size:letter landscape;margin:0}" : ($("ovHost").querySelector(".cr-sheet.uno") ? "@page{size:65mm 100mm;margin:0}" : "@page{size:letter portrait;margin:0}");
         setTimeout(() => window.print(), 200);
     }
     window.addEventListener("afterprint", () => {
@@ -1104,23 +1101,20 @@
         const fs = nombre.length <= 18 ? 13 : nombre.length <= 28 ? 11 : 9;
         const cat = c.cat ? c.cat + (c.sub ? " · " + c.sub : "") : "";
         return `<div class="cr-card">
-            <div class="cr-top"><img src="logo.jpg" class="cr-logo" alt=""><div>IV ENCUENTRO TECNOLÓGICO MECATRÓNICO 2026<br><span style="font-weight:400">Club Oruro Mecatrónico</span></div></div>
-            <div class="cr-main">
-                <div class="cr-info">
-                    <div class="cr-rol" style="background:${ROL_COLOR[c.rol] || "#334155"}">${esc(c.rol)}</div>
-                    <div class="cr-name" style="font-size:${fs}pt">${esc(nombre)}</div>
-                    ${c.equipo ? `<div class="cr-eq">${esc(c.equipo)}</div>` : ""}
-                    ${cat ? `<div class="cr-cat">${esc(cat)}</div>` : ""}
-                </div>
-                <div class="cr-side"><div class="cr-qr">${qrSVG(c.qr || c.codigo)}</div><div class="cr-cod">${esc(c.codigo)}</div></div>
-            </div>
+            <div class="cr-top"><img src="logo.jpg" class="cr-logo" alt=""><div>IV ENCUENTRO TECNOLÓGICO<br>MECATRÓNICO 2026</div></div>
+            <div class="cr-rol" style="background:${ROL_COLOR[c.rol] || "#334155"}">${esc(c.rol)}</div>
+            <div class="cr-name" style="font-size:${fs}pt">${esc(nombre)}</div>
+            ${c.equipo ? `<div class="cr-eq">${esc(c.equipo)}</div>` : ""}
+            ${cat ? `<div class="cr-cat">${esc(cat)}</div>` : ""}
+            <div class="cr-qr">${qrSVG(c.qr || c.codigo)}</div>
+            <div class="cr-cod">${esc(c.codigo)}</div>
             <div class="cr-ref">REFRIGERIO &nbsp;☐ SÁB 14 &nbsp;☐ DOM 15</div>
         </div>`;
     }
     function sheetsCred(items) {
         if (items.length === 1) return `<div class="cr-sheet uno">${cardHTML(items[0])}</div>`;
         let h = "";
-        for (let i = 0; i < items.length; i += 8) h += `<div class="cr-sheet">${items.slice(i, i + 8).map(cardHTML).join("")}</div>`;
+        for (let i = 0; i < items.length; i += 6) h += `<div class="cr-sheet">${items.slice(i, i + 6).map(cardHTML).join("")}</div>`;
         return h;
     }
     const credPersona = pe => ({ key: keyCred(pe.ci), codigo: "CI-" + pe.ci, nombre: pe.nombre, equipo: "", cat: "", sub: "", rol: "COMPETIDOR" });
@@ -1129,7 +1123,7 @@
         if (!items.length) { toast("No hay credenciales para imprimir.", "err"); return; }
         PRINT_MODE = "cred";
         PRINT_KEYS = items.map(i => i.key).filter(Boolean);
-        $("ovTitulo").textContent = "Credenciales (" + items.length + ") – " + (items.length === 1 ? "una sola, página de 100 x 65 mm" : "8 por hoja carta (100 x 65 mm)");
+        $("ovTitulo").textContent = "Credenciales (" + items.length + ") – " + (items.length === 1 ? "una sola, página de 65 x 100 mm" : "6 por hoja carta (65 x 100 mm)");
         $("ovCertCtl").classList.add("hidden"); $("ovAviso").classList.add("hidden");
         $("ovHost").innerHTML = sheetsCred(items);
         if (auto) imprimirAhora(); else abrirOverlay();
