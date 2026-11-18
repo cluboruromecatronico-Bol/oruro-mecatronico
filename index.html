@@ -16,6 +16,35 @@
         canvas#bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
         #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 100; max-width: 92vw; }
 
+
+        /* ---------- Ganadores (Inicio) ---------- */
+        @keyframes gnUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+        @keyframes gnShine { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .gn-wrap { position: relative; overflow: hidden; border-radius: 1.5rem; padding: 2rem 1.25rem; background: radial-gradient(ellipse at top, rgba(245,158,11,.18), transparent 60%), rgba(15,23,42,.75); border: 1px solid rgba(245,158,11,.35); backdrop-filter: blur(6px); }
+        .gn-title { background: linear-gradient(90deg,#fbbf24,#fff7d6,#f59e0b,#fbbf24); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gnShine 5s linear infinite; }
+        .gn-chip { padding: .35rem .85rem; border-radius: 999px; font-size: .72rem; font-weight: 700; border: 1px solid #334155; background: #0f172a; color: #cbd5e1; transition: .2s; cursor: pointer; }
+        .gn-chip:hover { border-color: #f59e0b; color: #fbbf24; }
+        .gn-chip.on { background: #f59e0b; color: #0f172a; border-color: #f59e0b; }
+        .gn-card { animation: gnUp .55s ease both; background: linear-gradient(160deg, rgba(30,41,59,.9), rgba(2,6,23,.95)); border: 1px solid #1e293b; border-radius: 1.25rem; padding: 1.1rem; display: flex; flex-direction: column; gap: .75rem; transition: transform .25s, border-color .25s, box-shadow .25s; }
+        .gn-card:hover { transform: translateY(-4px); border-color: rgba(245,158,11,.6); box-shadow: 0 14px 40px -12px rgba(245,158,11,.35); }
+        .gn-cat { font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #22d3ee; }
+        .gn-sub { font-size: .6rem; font-weight: 700; padding: .1rem .5rem; border-radius: 999px; background: rgba(34,211,238,.12); color: #67e8f9; border: 1px solid rgba(34,211,238,.3); }
+        .gn-p1 { position: relative; text-align: center; padding: 1.1rem .8rem .9rem; border-radius: 1rem; background: linear-gradient(145deg, rgba(251,191,36,.25), rgba(180,83,9,.15)); border: 1.5px solid #fbbf24; box-shadow: 0 0 28px -6px rgba(251,191,36,.55), inset 0 0 20px rgba(251,191,36,.08); }
+        .gn-p1 .gn-medal { font-size: 2.6rem; line-height: 1; filter: drop-shadow(0 4px 8px rgba(251,191,36,.5)); }
+        .gn-p1 .gn-team { font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: .3rem; line-height: 1.15; word-break: break-word; }
+        .gn-rowp { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+        .gn-p2, .gn-p3 { text-align: center; padding: .7rem .5rem; border-radius: .85rem; }
+        .gn-p2 { background: linear-gradient(145deg, rgba(203,213,225,.16), rgba(71,85,105,.12)); border: 1px solid #cbd5e1; }
+        .gn-p3 { background: linear-gradient(145deg, rgba(251,146,60,.16), rgba(124,45,18,.14)); border: 1px solid #fb923c; }
+        .gn-p2 .gn-medal, .gn-p3 .gn-medal { font-size: 1.7rem; line-height: 1; }
+        .gn-p2 .gn-team, .gn-p3 .gn-team { font-size: .85rem; font-weight: 700; color: #fff; margin-top: .2rem; line-height: 1.15; word-break: break-word; }
+        .gn-lugar { font-size: .55rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #fcd34d; }
+        .gn-p2 .gn-lugar { color: #e2e8f0; } .gn-p3 .gn-lugar { color: #fdba74; }
+        .gn-ints { margin-top: .45rem; display: flex; flex-wrap: wrap; gap: .25rem; justify-content: center; }
+        .gn-ints span { font-size: .62rem; padding: .12rem .5rem; border-radius: 999px; background: rgba(15,23,42,.7); color: #cbd5e1; border: 1px solid rgba(148,163,184,.25); }
+        .gn-p3:only-child { grid-column: 1 / -1; }
+        @media (prefers-reduced-motion: reduce) { .gn-card, .gn-title { animation: none; } }
+
         /* ---------- Área de impresión ---------- */
         #printArea { display: none; }
         #printArea, #ovHost { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -104,9 +133,14 @@
             </div>
 
             <!-- GANADORES PUBLICADOS POR LOS JURADOS -->
-            <div id="ganadoresPublico" class="hidden bg-slate-900/60 p-6 rounded-2xl border border-amber-500/30 space-y-4">
-                <h3 class="text-xl font-extrabold text-amber-400 text-center"><i class="fa-solid fa-trophy mr-2"></i>Ganadores del Encuentro</h3>
-                <div id="ganadoresPublicoLista" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="ganadoresPublico" class="hidden gn-wrap space-y-6">
+                <div class="text-center space-y-1">
+                    <p class="text-4xl">🏆</p>
+                    <h3 class="gn-title text-3xl md:text-4xl font-extrabold">Ganadores del Encuentro</h3>
+                    <p class="text-xs text-slate-400">IV Encuentro Tecnológico Mecatrónico 2026 · ¡Felicidades a todos los campeones!</p>
+                </div>
+                <div id="ganadoresFiltro" class="flex flex-wrap justify-center gap-2"></div>
+                <div id="ganadoresPublicoLista" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </div>
 
             <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 text-center space-y-4">
@@ -835,12 +869,33 @@
                     <p class="text-sm text-white"><span class="text-lg mr-1">${MEDALLA[x.puesto] || ""}</span><strong>${esc(x.equipo)}</strong><br><span class="text-[11px] text-slate-400 pl-7 block">${esc(x.integrantes)}</span></p>`).join("")}
             </div>`).join("");
     }
+    let GAN_PUB = [], GAN_FILTRO = "TODAS";
+    function ganadoresPublicoHTML(lista) {
+        const g = agruparGanadores(lista).filter(x => GAN_FILTRO === "TODAS" || x.categoria === GAN_FILTRO);
+        const ints = t => String(t || "").split(/\s*(?:\/|,)\s*/).filter(Boolean).map(n => `<span>${esc(n)}</span>`).join("");
+        const bloque = (x, cls, label) => x ? `<div class="${cls}"><div class="gn-lugar">${label}</div><div class="gn-medal">${MEDALLA[x.puesto]}</div><div class="gn-team">${esc(x.equipo)}</div><div class="gn-ints">${ints(x.integrantes)}</div></div>` : "";
+        return g.map((c, idx) => {
+            const by = n => c.puestos.find(x => x.puesto === n);
+            const seg = [bloque(by(2), "gn-p2", "Segundo lugar"), bloque(by(3), "gn-p3", "Tercer lugar")].join("");
+            return `<div class="gn-card" style="animation-delay:${idx * 70}ms">
+                <div class="flex items-center justify-between gap-2 flex-wrap"><span class="gn-cat">${esc(c.categoria)}</span><span class="gn-sub">${esc(c.subdivision)}</span></div>
+                ${bloque(by(1), "gn-p1", "Primer lugar")}
+                ${seg.trim() ? `<div class="gn-rowp">${seg}</div>` : ""}
+            </div>`;
+        }).join("");
+    }
+    function renderGanadoresPublicos() {
+        const cats = [...new Set(GAN_PUB.map(x => x.categoria))];
+        if (GAN_FILTRO !== "TODAS" && !cats.includes(GAN_FILTRO)) GAN_FILTRO = "TODAS";
+        $("ganadoresPublico").classList.toggle("hidden", !GAN_PUB.length);
+        $("ganadoresFiltro").innerHTML = cats.length > 1 ? ["TODAS", ...cats].map(c => `<button class="gn-chip ${c === GAN_FILTRO ? "on" : ""}" onclick="GAN_FILTRO=this.dataset.c;renderGanadoresPublicos()" data-c="${esc(c)}">${c === "TODAS" ? "Todas" : esc(c)}</button>`).join("") : "";
+        $("ganadoresPublicoLista").innerHTML = ganadoresPublicoHTML(GAN_PUB);
+    }
     async function cargarGanadoresPublicos() {
         try {
             const r = await (await fetch(API)).json();
-            const lista = r && r.ok ? (r.ganadores || []) : [];
-            $("ganadoresPublico").classList.toggle("hidden", !lista.length);
-            $("ganadoresPublicoLista").innerHTML = ganadoresHTML(lista);
+            GAN_PUB = r && r.ok ? (r.ganadores || []) : [];
+            renderGanadoresPublicos();
         } catch (e) { /* sin conexión: se oculta */ }
     }
 
