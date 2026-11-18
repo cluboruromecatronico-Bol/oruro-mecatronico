@@ -396,7 +396,7 @@
 
             <div id="adminPanelContent" class="hidden space-y-6">
                 <!-- Estadísticas (solo admin) -->
-                <div id="adminStats" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
+                <div id="adminStats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
 
                 <div class="bg-slate-900/90 p-6 rounded-2xl border border-slate-800 space-y-4">
                     <div class="flex flex-wrap justify-between items-center gap-2">
@@ -566,6 +566,10 @@
     const subBase = s => /libre/i.test(s || "") ? "Libre" : "Amateur";
     const esFni = s => /fni/i.test(s || "");
     const precioDe = s => { const m = /\((\d+)\s*Bs\)/.exec(s || ""); return m ? +m[1] : 0; };
+    // Monto de un equipo: lo escrito en la subdivisión "(65 Bs)"; si falta, se calcula con la tabla oficial de precios
+    const precioEquipo = p => precioDe(p.subdivision) || PRECIOS[(esFni(p.subdivision) ? "FNI" : "") + subBase(p.subdivision)] || 0;
+    // Método de pago: cada equipo cae en UNA sola categoría (así la suma de las partes = total)
+    const metodoDe = p => { const t = String(p.tipo || ""); if (/efectivo/i.test(t)) return "ef"; if (/\bqr\b/i.test(t)) return "qr"; if (/online|web/i.test(t)) return "on"; return "otro"; };
     const catDef = n => CATEGORIAS.find(c => c.n === n);
     function titulo(s) {
         const peq = ["de", "del", "la", "las", "los", "y", "e", "da", "do", "van", "von"];
@@ -998,7 +1002,10 @@
     function renderStats() {
         const P = D.participantes, ap = P.filter(p => p.estado === "Aprobado"), personas = personasDe(ap);
         const imp = personas.filter(x => yaImpreso(keyCred(x.ci))).length;
-        const suma = f => ap.filter(f).reduce((a, p) => a + precioDe(p.subdivision), 0);
+        const suma = (lista, f) => lista.filter(f).reduce((a, p) => a + precioEquipo(p), 0);
+        const total = suma(ap, () => true);
+        const on = suma(ap, p => metodoDe(p) === "on"), ef = suma(ap, p => metodoDe(p) === "ef"), qr = suma(ap, p => metodoDe(p) === "qr"), otro = suma(ap, p => metodoDe(p) === "otro");
+        const revision = suma(P, p => p.estado === "En Revisión");
         const card = (t, v, c) => `<div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-center"><p class="text-[10px] uppercase text-slate-400">${t}</p><p class="text-xl font-extrabold ${c}">${v}</p></div>`;
         $("adminStats").innerHTML =
             card("Equipos inscritos", P.length, "text-white") +
@@ -1006,9 +1013,12 @@
             card("En revisión", P.filter(p => p.estado === "En Revisión").length, "text-amber-400") +
             card("Rechazados", P.filter(p => p.estado === "Rechazado").length, "text-rose-400") +
             card("Personas (únicas)", personas.length, "text-cyan-400") +
-            card("Recaudado (aprobados)", suma(() => true) + " Bs", "text-amber-300") +
-            card("Puerta · Efectivo", suma(p => /efectivo/i.test(p.tipo)) + " Bs", "text-emerald-300") +
-            card("Puerta · QR", suma(p => /\(QR\)/i.test(p.tipo)) + " Bs", "text-cyan-300") +
+            card("TOTAL recaudado (aprobados)", total + " Bs", "text-amber-300") +
+            card("Online (comprobante)", on + " Bs", "text-sky-300") +
+            card("Puerta · Efectivo", ef + " Bs", "text-emerald-300") +
+            card("Puerta · QR", qr + " Bs", "text-cyan-300") +
+            (otro ? card("Sin clasificar", otro + " Bs", "text-rose-300") : "") +
+            card("Por cobrar (en revisión)", revision + " Bs", "text-slate-300") +
             card("Credenciales impresas", imp + " / " + personas.length, "text-white");
     }
     function renderAdmin() {
@@ -1116,9 +1126,9 @@
     function exportarCSV() {
         const san = (v, estricto) => { v = String(v == null ? "" : v); return (estricto ? /^[=+\-@\t\r]/ : /^[=@\t\r]/).test(v) ? "'" + v : v; };
         const q = v => '"' + String(v).replace(/"/g, '""') + '"';
-        let csv = "Código,Nombres,CI,Celular,Tutor,Categoría,Subdivisión,Equipo,Estado,Tipo,Comprobante,Doc FNI\n";
+        let csv = "Código,Nombres,CI,Celular,Tutor,Categoría,Subdivisión,Equipo,Estado,Tipo,Monto (Bs),Comprobante,Doc FNI\n";
         D.participantes.forEach(p => {
-            csv += [p.codigo, san(p.nombre, 1), san(p.ci), san(p.celular), san(p.tutor, 1), p.categoria, p.subdivision, san(p.equipo, 1), p.estado, p.tipo, p.pago, p.fni].map(q).join(",") + "\n";
+            csv += [p.codigo, san(p.nombre, 1), san(p.ci), san(p.celular), san(p.tutor, 1), p.categoria, p.subdivision, san(p.equipo, 1), p.estado, p.tipo, precioEquipo(p), p.pago, p.fni].map(q).join(",") + "\n";
         });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
